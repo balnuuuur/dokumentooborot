@@ -6,6 +6,7 @@ import com.example.project.entity.Document;
 import com.example.project.service.DocumentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -35,6 +36,7 @@ public class DocumentController {
     }
 
     @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<List<Document>> getAllDocuments() {
         try {
             List<Document> documents = documentService.getAllDocuments();
@@ -67,9 +69,9 @@ public class DocumentController {
     }
 
     @PutMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<Document> updateStatus(@PathVariable Long id, @RequestBody DocumentStatusRequest request) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
-
         try {
             Document document = documentService.updateDocumentStatus(id, request, username);
             return ApiResponse.success("Құжат статусы өзгертілді", document);
