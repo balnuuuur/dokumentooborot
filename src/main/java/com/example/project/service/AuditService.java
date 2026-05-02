@@ -12,6 +12,14 @@ public class AuditService {
 
     private final AuditLogRepository auditLogRepository;
 
+    public void log(String username, String action, Long documentId) {
+        AuditLog auditLog = new AuditLog();
+        auditLog.setUsername(username);
+        auditLog.setAction(action);
+        auditLog.setDocumentId(documentId);
+        auditLogRepository.save(auditLog);
+    }
+
     public List<AuditLog> getAllLogs() {
         return auditLogRepository.findAll();
     }
