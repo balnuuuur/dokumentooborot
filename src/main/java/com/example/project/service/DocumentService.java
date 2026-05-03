@@ -15,7 +15,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -129,5 +131,60 @@ public class DocumentService {
 
         Path filePath = Paths.get(document.getFilePath());
         return Files.readAllBytes(filePath);
+    }
+
+    public List<Document> searchDocumentsAdvanced(String username, String keyword, String status, Long minSize, Long maxSize,
+                                                  String startDate, String endDate) {
+        User user = userService.findByUsername(username);
+        List<Document> documents;
+
+        if (user.getRole().name().equals("ADMIN")) {
+            documents = documentRepository.findAll();
+        } else {
+            documents = documentRepository.findByOwnerId(user.getId());
+        }
+
+        if (keyword != null && !keyword.isEmpty()) {
+            documents = documents.stream()
+                    .filter(d -> d.getFileName().toLowerCase().contains(keyword.toLowerCase()))
+                    .collect(Collectors.toList());
+        }
+
+        if (status != null && !status.isEmpty()) {
+            try {
+                DocumentStatus statusEnum = DocumentStatus.valueOf(status.toUpperCase());
+                documents = documents.stream()
+                        .filter(d -> d.getStatus() == statusEnum)
+                        .collect(Collectors.toList());
+            } catch (IllegalArgumentException e) {
+            }
+        }
+
+        if (minSize != null && minSize > 0) {
+            documents = documents.stream()
+                    .filter(d -> d.getFileSize() >= minSize)
+                    .collect(Collectors.toList());
+        }
+
+        if (maxSize != null && maxSize > 0) {
+            documents = documents.stream()
+                    .filter(d -> d.getFileSize() <= maxSize)
+                    .collect(Collectors.toList());
+        }
+
+        if (startDate != null && !startDate.isEmpty()) {
+            LocalDateTime start = LocalDateTime.parse(startDate + "T00:00:00");
+            documents = documents.stream()
+                    .filter(d -> d.getUploadedAt().isAfter(start) || d.getUploadedAt().isEqual(start))
+                    .collect(Collectors.toList());
+        }
+
+        if (endDate != null && !endDate.isEmpty()) {
+            LocalDateTime end = LocalDateTime.parse(endDate + "T23:59:59");
+            documents = documents.stream()
+                    .filter(d -> d.getUploadedAt().isBefore(end) || d.getUploadedAt().isEqual(end))
+                    .collect(Collectors.toList());
+        }
+        return documents;
     }
 }
