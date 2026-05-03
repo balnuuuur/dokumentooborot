@@ -12,6 +12,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 @Service
@@ -110,5 +113,17 @@ public class DocumentService {
         auditLog.setDetails(details);
         auditLog.setDocumentId(documentId);
         auditLogRepository.save(auditLog);
+    }
+
+    public byte[] getFileContent(Long documentId, String username) throws IOException {
+        Document document = getDocumentById(documentId);
+        User user = userService.findByUsername(username);
+
+        if (!user.getRole().name().equals("ADMIN") && !document.getOwner().getUsername().equals(username)) {
+            throw new RuntimeException("Бұл құжатты көруге рұқсат жоқ");
+        }
+
+        Path filePath = Paths.get(document.getFilePath());
+        return Files.readAllBytes(filePath);
     }
 }
