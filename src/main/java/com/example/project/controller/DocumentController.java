@@ -5,7 +5,10 @@ import com.example.project.DTO.DocumentStatusRequest;
 import com.example.project.entity.Document;
 import com.example.project.service.DocumentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -65,6 +68,24 @@ public class DocumentController {
             return ApiResponse.success(document);
         } catch (Exception e) {
             return ApiResponse.error(e.getMessage());
+        }
+    }
+
+    @GetMapping("/{id}/preview")
+    public ResponseEntity<byte[]> previewDocument(@PathVariable Long id) {
+        try {
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            byte[] fileContent = documentService.getFileContent(id, username);
+            Document document = documentService.getDocumentById(id);
+
+            String contentType = document.getFileType() != null ? document.getFileType() : "application/octet-stream";
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + document.getFileName() + "\"")
+                    .body(fileContent);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
         }
     }
 
