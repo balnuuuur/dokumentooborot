@@ -80,6 +80,10 @@ public class DocumentService {
             document.setRejectionReason(request.getRejectionReason());
         }
 
+        if (newStatus == DocumentStatus.IN_REVIEW) {
+            document.setRejectionReason(null);
+        }
+
         Document updatedDocument = documentRepository.save(document);
 
         String actionMessage = "Статус өзгертілді: " + oldStatus + " - " + newStatus;
