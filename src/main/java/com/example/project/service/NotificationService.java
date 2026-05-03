@@ -38,6 +38,9 @@ public class NotificationService {
                     document.getFileName(),
                     reason
             );
+        } else if (newStatus == DocumentStatus.IN_REVIEW) {
+            title = "Құжат қаралуда";
+            message = String.format("Құжатыңыз \"%s\" қарау сатысына өтті.", document.getFileName());
         } else {
             return;
         }
