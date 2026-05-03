@@ -89,6 +89,27 @@ public class DocumentController {
         }
     }
 
+    @GetMapping("/advanced-search")
+    public ApiResponse<List<Document>> advancedSearch(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long minSize,
+            @RequestParam(required = false) Long maxSize,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
+
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        try {
+            List<Document> documents = documentService.searchDocumentsAdvanced(
+                    username, keyword, status, minSize, maxSize, startDate, endDate
+            );
+            return ApiResponse.success("Іздеу нәтижелері", documents);
+        } catch (Exception e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
+
     @PutMapping("/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<Document> updateStatus(@PathVariable Long id, @RequestBody DocumentStatusRequest request) {
