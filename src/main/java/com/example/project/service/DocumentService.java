@@ -22,6 +22,7 @@ public class DocumentService {
     private final UserService userService;
     private final FileStorageService fileStorageService;
     private final AuditLogRepository auditLogRepository;
+    private final NotificationService notificationService;
 
     public Document uploadDocument(MultipartFile file, String username, String description) throws IOException {
         if (file.isEmpty()) {
@@ -80,6 +81,8 @@ public class DocumentService {
 
         String actionMessage = "Статус өзгертілді: " + oldStatus + " - " + newStatus;
         saveAuditLog(adminUsername, ActionType.UPDATE_STATUS, actionMessage, documentId);
+
+        notificationService.sendStatusNotification(document, oldStatus, newStatus);
 
         return updatedDocument;
     }
