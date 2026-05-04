@@ -115,7 +115,7 @@ function Dashboard() {
           </thead>
           <tbody>
             {documents.length === 0 ? (
-              <td><td colSpan="7" style={styles.noData}>Құжаттар жоқ</td></tr>
+              <td colSpan="7" style={styles.noData}>Құжаттар жоқ</td></tr>
             ) : (
               documents.map((doc, index) => (
                 <tr key={doc.id}>
