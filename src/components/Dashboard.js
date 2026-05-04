@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getMyDocuments, getAllDocuments, deleteDocument, searchDocuments } from '../services/api';
 import { Link } from 'react-router-dom';
 
@@ -10,7 +10,7 @@ function Dashboard() {
   const [searchStatus, setSearchStatus] = useState('');
   const userRole = localStorage.getItem('userRole');
 
-  const loadDocuments = async () => {
+  const loadDocuments = useCallback(async () => {
     try {
       let response;
       if (userRole === 'ADMIN') {
@@ -24,7 +24,7 @@ function Dashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userRole]);
 
   const handleSearch = async () => {
     setLoading(true);
@@ -51,7 +51,7 @@ function Dashboard() {
 
   useEffect(() => {
     loadDocuments();
-  }, []);
+  }, [loadDocuments]);
 
   const getStatusColor = (status) => {
     switch(status) {
@@ -115,7 +115,7 @@ function Dashboard() {
           </thead>
           <tbody>
             {documents.length === 0 ? (
-              <tr><td colSpan="7" style={styles.noData}>Құжаттар жоқ</td></tr>
+              <td><td colSpan="7" style={styles.noData}>Құжаттар жоқ</td></tr>
             ) : (
               documents.map((doc, index) => (
                 <tr key={doc.id}>
