@@ -115,7 +115,9 @@ function Dashboard() {
           </thead>
           <tbody>
             {documents.length === 0 ? (
-              <td colSpan="7" style={styles.noData}>Құжаттар жоқ</td></tr>
+              <tr>
+                <td colSpan="7" style={styles.noData}>Құжаттар жоқ</td>
+              </tr>
             ) : (
               documents.map((doc, index) => (
                 <tr key={doc.id}>
@@ -123,7 +125,11 @@ function Dashboard() {
                   <td>{doc.fileName}</td>
                   <td>{doc.fileType?.split('/')[1] || 'unknown'}</td>
                   <td>{(doc.fileSize / 1024).toFixed(1)} KB</td>
-                  <td><span style={{...styles.statusBadge, backgroundColor: getStatusColor(doc.status)}}>{getStatusLabel(doc.status)}</span></td>
+                  <td>
+                    <span style={{...styles.statusBadge, backgroundColor: getStatusColor(doc.status)}}>
+                      {getStatusLabel(doc.status)}
+                    </span>
+                  </td>
                   <td>{new Date(doc.uploadedAt).toLocaleDateString('kk-KZ')}</td>
                   <td style={styles.actions}>
                     <Link to={`/document/${doc.id}`} style={styles.viewBtn}>Көру</Link>
