@@ -178,7 +178,7 @@ const styles = {
 
   searchBtn: {
     padding: '10px 16px',
-    backgroundColor: '#6366f1',
+    background: 'linear-gradient(135deg,#6366f1,#a855f7)',
     color: '#fff',
     border: 'none',
     borderRadius: '8px',
