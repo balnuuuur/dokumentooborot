@@ -13,23 +13,20 @@ function Login() {
     e.preventDefault();
     setLoading(true);
     setError('');
-
     try {
       const response = await login(username, password);
       if (response.data.success) {
         const token = response.data.data;
         localStorage.setItem('token', token);
-
         const payload = JSON.parse(atob(token.split('.')[1]));
         localStorage.setItem('userRole', payload.role);
         localStorage.setItem('username', payload.sub);
-
         navigate('/dashboard');
       } else {
         setError(response.data.message);
       }
     } catch (err) {
-      setError('Қате: ' + (err.response?.data?.message || 'Серверге қосылу мүмкін емес'));
+      setError('Қате: Қосылу мүмкін емес');
     } finally {
       setLoading(false);
     }
@@ -38,50 +35,147 @@ function Login() {
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <h2 style={styles.title}>Кіру</h2>
-        {error && <div style={styles.error}>{error}</div>}
-        <form onSubmit={handleSubmit}>
-          <div style={styles.inputGroup}>
-            <label>Пайдаланушы аты</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              style={styles.input}
-              required
-            />
+        <div style={styles.formContainer}>
+          <div style={styles.iconContainer}>
           </div>
-          <div style={styles.inputGroup}>
-            <label>Құпия сөз</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={styles.input}
-              required
-            />
-          </div>
-          <button type="submit" style={styles.button} disabled={loading}>
-            {loading ? 'Кіру...' : 'Кіру'}
-          </button>
-        </form>
-        <p style={styles.registerLink}>
-          Тіркелмегенсіз бе? <Link to="/register">Тіркелу</Link>
-        </p>
+
+          <h1 style={styles.title}>Қош келдіңіз</h1>
+          <p style={styles.subtitle}>Құжаттарыңызға қол жеткізу үшін кіріңіз</p>
+
+          {error && <div style={styles.error}>{error}</div>}
+
+          <form onSubmit={handleSubmit}>
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>Пайдаланушы аты</label>
+              <input
+                type="text"
+                style={styles.input}
+                placeholder="Енгізу..."
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+            </div>
+
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>Құпия сөз</label>
+              <input
+                type="password"
+                style={styles.input}
+                placeholder="·········"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <button type="submit" style={styles.button} disabled={loading}>
+              {loading ? 'Кіру...' : 'Кіру'}
+            </button>
+          </form>
+
+          <p style={styles.registerLink}>
+            Тіркелмегенсіз бе? <Link to="/register" style={styles.link}>Тіркелу</Link>
+          </p>
+        </div>
       </div>
     </div>
   );
 }
 
 const styles = {
-  container: { display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: '#f5f5f5' },
-  card: { backgroundColor: 'white', padding: '30px', borderRadius: '10px', boxShadow: '0 0 10px rgba(0,0,0,0.1)', width: '400px' },
-  title: { textAlign: 'center', marginBottom: '20px' },
-  inputGroup: { marginBottom: '15px' },
-  input: { width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '5px', fontSize: '16px' },
-  button: { width: '100%', padding: '10px', backgroundColor: '#3498db', color: 'white', border: 'none', borderRadius: '5px', fontSize: '16px', cursor: 'pointer' },
-  error: { backgroundColor: '#f8d7da', color: '#721c24', padding: '10px', borderRadius: '5px', marginBottom: '15px' },
-  registerLink: { textAlign: 'center', marginTop: '15px' },
+  container: {
+    minHeight: '100vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontFamily: 'system-ui, -apple-system, sans-serif',
+  },
+  card: {
+    backgroundColor: 'white',
+    borderRadius: '20px',
+    boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+    width: '420px',
+    maxWidth: '90%',
+    padding: '40px',
+  },
+  formContainer: {
+    width: '100%',
+  },
+  iconContainer: {
+    textAlign: 'center',
+    marginBottom: '20px',
+  },
+  icon: {
+    fontSize: '48px',
+  },
+  title: {
+    textAlign: 'center',
+    fontSize: '28px',
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: '8px',
+  },
+  subtitle: {
+    textAlign: 'center',
+    fontSize: '14px',
+    fontWeight: 'normal',
+    color: '#888',
+    marginBottom: '30px',
+  },
+  inputGroup: {
+    marginBottom: '20px',
+  },
+  label: {
+    display: 'block',
+    marginBottom: '8px',
+    fontSize: '14px',
+    fontWeight: '500',
+    color: '#555',
+  },
+  input: {
+    width: '100%',
+    padding: '14px 16px',
+    border: '1px solid #e0e0e0',
+    borderRadius: '12px',
+    fontSize: '14px',
+    boxSizing: 'border-box',
+    transition: 'all 0.3s',
+    outline: 'none',
+  },
+  button: {
+    width: '100%',
+    padding: '14px',
+    backgroundColor: '#667eea',
+    color: 'white',
+    border: 'none',
+    borderRadius: '12px',
+    fontSize: '16px',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'background 0.3s',
+    marginTop: '10px',
+  },
+  registerLink: {
+    textAlign: 'center',
+    marginTop: '24px',
+    fontSize: '14px',
+    color: '#666',
+  },
+  link: {
+    color: '#667eea',
+    textDecoration: 'none',
+    fontWeight: '600',
+  },
+  error: {
+    backgroundColor: '#fee',
+    color: '#c00',
+    padding: '12px',
+    borderRadius: '12px',
+    marginBottom: '20px',
+    fontSize: '14px',
+    textAlign: 'center',
+  },
 };
 
 export default Login;
