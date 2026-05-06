@@ -61,11 +61,18 @@ function Layout() {
         </div>
       </aside>
 
-      <main style={styles.main}>
+      <main style={{
+        ...styles.main,
+        marginLeft: sidebarOpen ? '260px' : '80px'
+      }}>
         <header style={styles.header}>
-          <button style={styles.menuBtn} onClick={() => setSidebarOpen(!sidebarOpen)}>
-            <FiMenu size={24} />
+          <button
+            style={styles.menuBtn}
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            <FiMenu size={22} />
           </button>
+
           <div style={styles.headerRight}>
             <div style={styles.profile}>
               <div style={styles.avatar}>
@@ -73,7 +80,9 @@ function Layout() {
               </div>
               <div style={styles.profileInfo}>
                 <p style={styles.profileName}>{username}</p>
-                <p style={styles.profileRole}>{userRole === 'ADMIN' ? 'Әкімші' : 'Қолданушы'}</p>
+                <p style={styles.profileRole}>
+                  {userRole === 'ADMIN' ? 'Әкімші' : 'Қолданушы'}
+                </p>
               </div>
             </div>
           </div>
@@ -87,71 +96,115 @@ function Layout() {
 }
 
 const styles = {
-  app: { display: 'flex', minHeight: '100vh', backgroundColor: '#f5f7fa' },
+  app: {
+    display: 'flex',
+    backgroundColor: '#f6f8fb',
+  },
+
   sidebar: {
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#111827',
     color: 'white',
     position: 'fixed',
+    top: 0,
+    left: 0,
     height: '100vh',
-    overflowY: 'auto',
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
-    transition: 'width 0.3s',
-    zIndex: 100,
+    transition: 'width 0.3s ease',
+    paddingTop: '10px',
   },
-  logo: { padding: '24px 20px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', gap: '12px' },
-  logoIcon: { fontSize: '24px' },
-  logoText: { fontSize: '20px', fontWeight: 'bold' },
-  nav: { padding: '20px', flex: 1 },
+
+  logo: {
+    padding: '20px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    fontWeight: '600',
+  },
+
+  nav: {
+    padding: '10px',
+    flex: 1,
+  },
+
   navItem: {
     display: 'flex',
     alignItems: 'center',
-    gap: '16px',
-    padding: '12px 16px',
-    borderRadius: '8px',
-    marginBottom: '8px',
-    color: 'rgba(255,255,255,0.8)',
+    gap: '14px',
+    padding: '10px 14px',
+    borderRadius: '10px',
+    color: '#cbd5e1',
     textDecoration: 'none',
+    background: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    transition: '0.2s',
+  },
+
+  bottomNav: {
+    padding: '10px',
+  },
+
+  main: {
+    flex: 1,
+    transition: 'margin-left 0.3s ease',
+  },
+
+  header: {
+    height: '60px',
+    backgroundColor: '#ffffff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '0 20px',
+    position: 'sticky',
+    top: 0,
+    zIndex: 10,
+  },
+
+  menuBtn: {
     background: 'none',
     border: 'none',
     cursor: 'pointer',
-    width: '100%',
-    textAlign: 'left',
-    fontSize: '14px',
-    transition: 'all 0.3s',
-  },
-  bottomNav: { padding: '20px', borderTop: '1px solid rgba(255,255,255,0.1)' },
-  main: { flex: 1, marginLeft: '260px' },
-  header: {
-    backgroundColor: 'white',
-    padding: '16px 24px',
     display: 'flex',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    borderBottom: '1px solid #e0e0e0',
-    position: 'sticky',
-    top: 0,
-    zIndex: 99,
+    padding: '6px',
   },
-  menuBtn: { background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center' },
-  headerRight: { display: 'flex', alignItems: 'center', gap: '20px' },
-  profile: { display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' },
+
+  content: {
+    padding: '20px 30px',
+  },
+
+  profile: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+  },
+
   avatar: {
-    width: '40px',
-    height: '40px',
-    backgroundColor: '#667eea',
+    width: '36px',
+    height: '36px',
     borderRadius: '50%',
+    backgroundColor: '#6366f1',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color: 'white',
-    fontWeight: 'bold',
+    color: '#fff',
+    fontWeight: '600',
   },
-  profileInfo: { textAlign: 'left' },
-  profileName: { fontSize: '14px', fontWeight: '600', margin: 0 },
-  profileRole: { fontSize: '12px', color: '#888', margin: 0 },
-  content: { padding: '24px' },
+
+  profileName: {
+    margin: 0,
+    fontSize: '14px',
+    fontWeight: '600',
+  },
+
+  profileRole: {
+    margin: 0,
+    fontSize: '12px',
+    color: '#9ca3af',
+  },
 };
 
 export default Layout;

@@ -146,22 +146,124 @@ function Dashboard() {
 }
 
 const styles = {
-  container: { maxWidth: '1200px', margin: '0 auto', padding: '20px' },
-  title: { textAlign: 'center', marginBottom: '20px' },
-  searchBox: { display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' },
-  searchInput: { flex: 1, padding: '10px', border: '1px solid #ddd', borderRadius: '5px' },
-  searchSelect: { padding: '10px', border: '1px solid #ddd', borderRadius: '5px' },
-  searchBtn: { padding: '10px 20px', backgroundColor: '#3498db', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' },
-  resetBtn: { padding: '10px 20px', backgroundColor: '#6c757d', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' },
-  tableWrapper: { overflowX: 'auto' },
-  table: { width: '100%', borderCollapse: 'collapse', backgroundColor: 'white' },
-  statusBadge: { padding: '5px 10px', borderRadius: '20px', color: 'white', fontSize: '12px' },
-  actions: { display: 'flex', gap: '5px' },
-  viewBtn: { padding: '5px 10px', backgroundColor: '#2ecc71', color: 'white', textDecoration: 'none', borderRadius: '5px' },
-  deleteBtn: { padding: '5px 10px', backgroundColor: '#e74c3c', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' },
-  loading: { textAlign: 'center', padding: '50px', fontSize: '20px' },
-  error: { backgroundColor: '#f8d7da', color: '#721c24', padding: '10px', borderRadius: '5px', marginBottom: '20px' },
-  noData: { textAlign: 'center', padding: '30px' },
+  container: {
+    maxWidth: '1100px',
+    margin: '0 auto',
+  },
+
+  title: {
+    fontSize: '24px',
+    fontWeight: '600',
+    marginBottom: '16px',
+  },
+
+  searchBox: {
+    display: 'flex',
+    gap: '10px',
+    marginBottom: '20px',
+  },
+
+  searchInput: {
+    flex: 1,
+    padding: '10px',
+    border: '1px solid #e5e7eb',
+    borderRadius: '8px',
+  },
+
+  searchSelect: {
+    padding: '10px',
+    border: '1px solid #e5e7eb',
+    borderRadius: '8px',
+  },
+
+  searchBtn: {
+    padding: '10px 16px',
+    backgroundColor: '#6366f1',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+  },
+
+  resetBtn: {
+    padding: '10px 16px',
+    backgroundColor: '#e5e7eb',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+  },
+
+  tableWrapper: {
+    overflowX: 'auto',
+  },
+
+  table: {
+    width: '100%',
+    borderCollapse: 'collapse',
+  },
+
+  th: {
+    textAlign: 'left',
+    padding: '12px',
+    fontSize: '12px',
+    color: '#6b7280',
+  },
+
+  td: {
+    padding: '14px 12px',
+    fontSize: '14px',
+  },
+
+  row: {
+    borderBottom: '1px solid #f1f5f9',
+  },
+
+  statusBadge: {
+    padding: '4px 10px',
+    borderRadius: '999px',
+    color: '#fff',
+    fontSize: '12px',
+  },
+
+  actions: {
+    display: 'flex',
+    gap: '6px',
+  },
+
+  viewBtn: {
+    backgroundColor: '#22c55e',
+    color: '#fff',
+    padding: '5px 10px',
+    borderRadius: '6px',
+    textDecoration: 'none',
+    fontSize: '12px',
+  },
+
+  deleteBtn: {
+    backgroundColor: '#ef4444',
+    color: '#fff',
+    border: 'none',
+    padding: '5px 10px',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '12px',
+  },
+
+  loading: {
+    textAlign: 'center',
+    marginTop: '40px',
+  },
+
+  error: {
+    color: '#ef4444',
+    marginBottom: '10px',
+  },
+
+  noData: {
+    textAlign: 'center',
+    padding: '30px',
+    color: '#9ca3af',
+  },
 };
 
 export default Dashboard;
