@@ -16,9 +16,11 @@ function App() {
   return (
      <BrowserRouter>
       <Routes>
-        <Route path="/login" element={token ? <Navigate to="/dashboard" /> : <Login />} />
-        <Route path="/register" element={token ? <Navigate to="/dashboard" /> : <Register />} />
-        <Route element={token ? <Layout /> : <Navigate to="/login" />}>
+        <Route path="/login" element={!token ? <Login /> : <Navigate to="/dashboard" />} />
+        <Route path="/register" element={!token ? <Register /> : <Navigate to="/dashboard" />} />
+
+      {token && (
+        <Route element={<Layout />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/documents" element={<Documents />} />
         <Route path="/upload" element={<Upload />} />
@@ -27,6 +29,9 @@ function App() {
         <Route path="/document/:id" element={<DocumentDetail />} />
         <Route path="/" element={<Navigate to="/dashboard" />} />
       </Route>
+    )}
+
+    <Route path="*" element={<Navigate to="/login" />} />
     </Routes>
     </BrowserRouter>
   );
