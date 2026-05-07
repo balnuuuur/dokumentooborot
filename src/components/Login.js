@@ -21,7 +21,7 @@ function Login() {
         const payload = JSON.parse(atob(token.split('.')[1]));
         localStorage.setItem('userRole', payload.role);
         localStorage.setItem('username', payload.sub);
-        navigate('/dashboard');
+        window.location.href = '/dashboard';
       } else {
         setError(response.data.message);
       }
