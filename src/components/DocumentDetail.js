@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getDocumentById, addComment, getCommentsByDocument, } from '../services/api';
-import { FiDownload, FiUser, FiMessageSquare, FiCalendar, FiClock, FiArrowLeft, FiFileText, } from 'react-icons/fi';
+import { getDocumentById, addComment, getCommentsByDocument } from '../services/api';
+import { FiDownload, FiMessageSquare, FiCalendar, FiClock, FiArrowLeft, FiFileText, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 function DocumentDetail() {
   const { id } = useParams();
@@ -9,6 +9,11 @@ function DocumentDetail() {
   const [doc, setDoc] = useState(null);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [numPages, setNumPages] = useState(12);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     loadDocument();
@@ -18,9 +23,42 @@ function DocumentDetail() {
   const loadDocument = async () => {
     try {
       const res = await getDocumentById(id);
-      setDoc(res.data.data);
+      const documentData = res.data.data;
+
+      setDoc(documentData);
+
+      await loadPdfPreview();
     } catch (err) {
       console.error(err);
+      setError('Құжатты жүктеу қатесі');
+      setLoading(false);
+    }
+  };
+
+  const loadPdfPreview = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(
+        `http://localhost:8080/api/documents/${id}/preview`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('PDF жүктелмеді');
+      }
+
+      const blob = await response.blob();
+      const localUrl = URL.createObjectURL(blob);
+      setPdfUrl(localUrl);
+      setLoading(false);
+    } catch (err) {
+      console.error(err);
+      setPdfUrl(null);
+      setLoading(false);
     }
   };
 
@@ -40,6 +78,37 @@ function DocumentDetail() {
       await addComment(id, newComment);
       setNewComment('');
       loadComments();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDownload = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(
+        `http://localhost:8080/api/documents/${id}/download`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+
+      link.href = url;
+      link.download = doc?.fileName || 'document';
+
+      document.body.appendChild(link);
+
+      link.click();
+
+      document.body.removeChild(link);
+
+      window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error(err);
     }
@@ -89,7 +158,19 @@ function DocumentDetail() {
     }
   };
 
-  if (!doc) {
+  const goToPrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < numPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  if (loading) {
     return (
       <div style={styles.loadingContainer}>
         <div style={styles.loader}></div>
@@ -98,9 +179,26 @@ function DocumentDetail() {
     );
   }
 
+  if (error) {
+    return (
+      <div style={styles.errorContainer}>
+        <p>{error}</p>
+        <button
+          onClick={() => navigate(-1)}
+          style={styles.errorBtn}
+        >
+          Артқа
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div style={styles.page}>
-      <button onClick={() => navigate(-1)} style={styles.backBtn}>
+      <button
+        onClick={() => navigate(-1)}
+        style={styles.backBtn}
+      >
         <FiArrowLeft size={18} />
         Артқа
       </button>
@@ -113,51 +211,78 @@ function DocumentDetail() {
             </div>
 
             <div style={styles.headerContent}>
-              <h1 style={styles.title}>{doc.fileName}</h1>
+              <h1 style={styles.title}>
+                {doc?.fileName}
+              </h1>
 
               <p style={styles.description}>
-                {doc.description ||
-                  'Сипаттама қосылмаған'}
+                {doc?.description || 'Сипаттама қосылмаған'}
               </p>
 
               <div style={styles.topInfo}>
                 <span
                   style={{
                     ...styles.statusBadge,
-                    ...getStatusStyle(doc.status),
+                    ...getStatusStyle(doc?.status),
                   }}
                 >
-                  {getStatusText(doc.status)}
+                  {getStatusText(doc?.status)}
                 </span>
 
                 <div style={styles.infoItem}>
                   <FiCalendar size={14} />
-                  {new Date(doc.uploadedAt).toLocaleDateString()}
+                  {new Date(doc?.uploadedAt).toLocaleDateString()}
                 </div>
               </div>
             </div>
           </div>
 
-          <div style={styles.actionsRow}>
-            <button style={styles.downloadBtn}>
-              <FiDownload size={18} />
-              Жүктеу
-            </button>
-          </div>
+          <button
+            onClick={handleDownload}
+            style={styles.downloadBtn}
+          >
+            <FiDownload size={18} />
+            Жүктеу
+          </button>
 
           <div style={styles.previewCard}>
             <div style={styles.sectionHeader}>
-              <h3 style={styles.sectionTitle}>Құжат алдын ала қарау</h3>
+              <h3 style={styles.sectionTitle}>
+                Құжат алдын ала қарау
+              </h3>
             </div>
 
-            <div style={styles.previewBox}>
-              <FiFileText size={80} color="#667eea" />
+            <div style={styles.pdfContainer}>
+              {pdfUrl && doc?.fileType?.includes('pdf') ? (
+                <>
+                  <object
+                    data={`${pdfUrl}#page=${currentPage}`}
+                    type="application/pdf"
+                    style={styles.pdfIframe}
+                  >
+                    <p>PDF ашылмады</p>
+                  </object>
+                </>
+              ) : (
+                <div style={styles.previewBox}>
+                  <FiFileText
+                    size={70}
+                    color="#667eea"
+                  />
 
-              <p style={styles.previewText}>
-                Құжат preview осы жерде көрсетіледі
-              </p>
+                  <p style={styles.previewText}>
+                    Алдын ала қарау қолжетімсіз
+                  </p>
 
-              <span style={styles.previewPages}> Бет 1 / 12</span>
+                  <button
+                    onClick={handleDownload}
+                    style={styles.downloadPreviewBtn}
+                  >
+                    <FiDownload size={16} />
+                    Жүктеу
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -170,27 +295,43 @@ function DocumentDetail() {
 
             {comments.length === 0 ? (
               <div style={styles.emptyComments}>
-                <FiMessageSquare size={40} color="#cbd5e1" />
-                <p>Пікірлер әлі жоқ</p>
+                <FiMessageSquare
+                  size={40}
+                  color="#cbd5e1"
+                />
+
+                <p>Пікірлер жоқ</p>
               </div>
             ) : (
               comments.map((c) => (
-                <div key={c.id} style={styles.commentItem}>
+                <div
+                  key={c.id}
+                  style={styles.commentItem}
+                >
                   <div style={styles.commentAvatar}>
-                    {c.author?.username?.charAt(0)?.toUpperCase() || 'U'}
+                    {c.author?.username
+                      ?.charAt(0)
+                      ?.toUpperCase() || 'U'}
                   </div>
 
                   <div style={styles.commentContent}>
                     <div style={styles.commentTop}>
-                      <strong>{c.author?.username}</strong>
+                      <strong>
+                        {c.author?.username}
+                      </strong>
 
                       <span style={styles.commentDate}>
                         <FiClock size={12} />
-                        {new Date(c.createdAt).toLocaleString()}
+
+                        {new Date(
+                          c.createdAt
+                        ).toLocaleString()}
                       </span>
                     </div>
 
-                    <p style={styles.commentText}>{c.content}</p>
+                    <p style={styles.commentText}>
+                      {c.content}
+                    </p>
                   </div>
                 </div>
               ))
@@ -200,7 +341,9 @@ function DocumentDetail() {
               <textarea
                 placeholder="Пікір қалдыру..."
                 value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
+                onChange={(e) =>
+                  setNewComment(e.target.value)
+                }
                 style={styles.textarea}
               />
 
@@ -217,39 +360,61 @@ function DocumentDetail() {
 
         <div style={styles.sidebar}>
           <div style={styles.infoCard}>
-            <h3 style={styles.infoTitle}>Құжат ақпараты</h3>
+            <h3 style={styles.infoTitle}>
+              Құжат ақпараты
+            </h3>
 
             <div style={styles.infoRow}>
-              <span style={styles.infoLabel}>Иесі</span>
+              <span style={styles.infoLabel}>
+                Иесі
+              </span>
+
               <span style={styles.infoValue}>
-                {doc.owner?.username || 'Unknown'}
+                {doc?.owner?.username}
               </span>
             </div>
 
             <div style={styles.infoRow}>
-              <span style={styles.infoLabel}>Құрылған күні</span>
+              <span style={styles.infoLabel}>
+                Құрылған
+              </span>
+
               <span style={styles.infoValue}>
-                {new Date(doc.uploadedAt).toLocaleDateString()}
+                {new Date(
+                  doc?.uploadedAt
+                ).toLocaleDateString()}
               </span>
             </div>
 
             <div style={styles.infoRow}>
-              <span style={styles.infoLabel}>Соңғы өзгерту</span>
+              <span style={styles.infoLabel}>
+                Өзгертілген
+              </span>
+
               <span style={styles.infoValue}>
-                {new Date(doc.updatedAt).toLocaleDateString()}
+                {new Date(
+                  doc?.updatedAt
+                ).toLocaleDateString()}
               </span>
             </div>
 
             <div style={styles.infoRow}>
-              <span style={styles.infoLabel}>Статус</span>
+              <span style={styles.infoLabel}>
+                Файл түрі
+              </span>
 
-              <span
-                style={{
-                  ...styles.smallStatus,
-                  ...getStatusStyle(doc.status),
-                }}
-              >
-                {getStatusText(doc.status)}
+              <span style={styles.infoValue}>
+                {doc?.fileName?.split('.').pop()?.toUpperCase()}
+              </span>
+            </div>
+
+            <div style={styles.infoRow}>
+              <span style={styles.infoLabel}>
+                Өлшемі
+              </span>
+
+              <span style={styles.infoValue}>
+                {(doc?.fileSize / 1024).toFixed(1)} KB
               </span>
             </div>
           </div>
@@ -268,7 +433,6 @@ const styles = {
     display: 'grid',
     gridTemplateColumns: '2fr 1fr',
     gap: '24px',
-    alignItems: 'start',
   },
 
   main: {
@@ -290,9 +454,8 @@ const styles = {
     border: 'none',
     color: '#667eea',
     cursor: 'pointer',
-    marginBottom: '24px',
-    fontSize: '15px',
-    fontWeight: '500',
+    marginBottom: '20px',
+    fontWeight: '600',
   },
 
   headerCard: {
@@ -313,7 +476,6 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0,
   },
 
   headerContent: {
@@ -323,19 +485,18 @@ const styles = {
   title: {
     fontSize: '30px',
     fontWeight: '700',
-    marginBottom: '14px',
-    color: '#111827',
+    marginBottom: '12px',
   },
 
   description: {
-    color: '#6b7280',
+    color: '#64748b',
     lineHeight: '1.7',
     marginBottom: '18px',
   },
 
   topInfo: {
     display: 'flex',
-    gap: '14px',
+    gap: '12px',
     alignItems: 'center',
     flexWrap: 'wrap',
   },
@@ -351,13 +512,8 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '6px',
-    color: '#6b7280',
+    color: '#64748b',
     fontSize: '14px',
-  },
-
-  actionsRow: {
-    display: 'flex',
-    gap: '16px',
   },
 
   downloadBtn: {
@@ -367,11 +523,11 @@ const styles = {
     padding: '12px 22px',
     borderRadius: '14px',
     cursor: 'pointer',
-    display: 'inline-flex',
+    display: 'flex',
     alignItems: 'center',
-    gap: '10px',
+    gap: '8px',
+    width: 'fit-content',
     fontWeight: '600',
-    fontSize: '14px',
   },
 
   previewCard: {
@@ -388,28 +544,70 @@ const styles = {
   sectionTitle: {
     fontSize: '20px',
     fontWeight: '700',
-    color: '#111827',
+  },
+
+  pdfContainer: {
+    overflow: 'hidden',
+    borderRadius: '20px',
+    backgroundColor: '#f8fafc',
+  },
+
+  pdfToolbar: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: '18px',
+    padding: '12px',
+    backgroundColor: '#f1f5f9',
+  },
+
+  pdfNavBtn: {
+    backgroundColor: '#667eea',
+    color: 'white',
+    border: 'none',
+    width: '42px',
+    height: '42px',
+    borderRadius: '12px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  pdfNavBtnDisabled: {
+    opacity: 0.5,
+    cursor: 'not-allowed',
+  },
+
+  pageInfo: {
+    fontWeight: '600',
+    color: '#475569',
+  },
+
+  pdfIframe: {
+    width: '100%',
+    height: '700px',
+    border: 'none',
   },
 
   previewBox: {
-    backgroundColor: '#f8fafc',
-    borderRadius: '20px',
     padding: '70px 20px',
     textAlign: 'center',
-    border: '2px dashed #dbeafe',
   },
 
   previewText: {
-    marginTop: '20px',
+    marginTop: '18px',
     color: '#64748b',
-    fontSize: '15px',
   },
 
-  previewPages: {
-    display: 'inline-block',
-    marginTop: '14px',
-    color: '#94a3b8',
-    fontSize: '14px',
+  downloadPreviewBtn: {
+    marginTop: '20px',
+    backgroundColor: '#667eea',
+    color: 'white',
+    border: 'none',
+    padding: '10px 18px',
+    borderRadius: '12px',
+    cursor: 'pointer',
   },
 
   commentsCard: {
@@ -421,17 +619,17 @@ const styles = {
 
   emptyComments: {
     textAlign: 'center',
-    padding: '50px 20px',
+    padding: '40px',
     color: '#94a3b8',
   },
 
   commentItem: {
     display: 'flex',
     gap: '14px',
-    marginBottom: '18px',
     padding: '16px',
     borderRadius: '18px',
     backgroundColor: '#f8fafc',
+    marginBottom: '16px',
   },
 
   commentAvatar: {
@@ -444,7 +642,6 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     fontWeight: '700',
-    flexShrink: 0,
   },
 
   commentContent: {
@@ -454,28 +651,25 @@ const styles = {
   commentTop: {
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: '6px',
     flexWrap: 'wrap',
-    gap: '8px',
   },
 
   commentDate: {
     display: 'flex',
     alignItems: 'center',
     gap: '4px',
-    fontSize: '12px',
     color: '#94a3b8',
+    fontSize: '12px',
   },
 
   commentText: {
-    margin: 0,
     color: '#475569',
     lineHeight: '1.6',
   },
 
   commentInputBox: {
-    marginTop: '24px',
+    marginTop: '20px',
   },
 
   textarea: {
@@ -485,7 +679,6 @@ const styles = {
     borderRadius: '16px',
     border: '1px solid #e2e8f0',
     resize: 'none',
-    fontSize: '14px',
     outline: 'none',
     marginBottom: '16px',
     boxSizing: 'border-box',
@@ -515,34 +708,22 @@ const styles = {
     fontSize: '18px',
     fontWeight: '700',
     marginBottom: '20px',
-    color: '#111827',
   },
 
   infoRow: {
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '14px 0',
+    padding: '12px 0',
     borderBottom: '1px solid #f1f5f9',
-    gap: '10px',
   },
 
   infoLabel: {
     color: '#64748b',
-    fontSize: '14px',
   },
 
   infoValue: {
+    fontWeight: '600',
     color: '#111827',
-    fontWeight: '600',
-    fontSize: '14px',
-  },
-
-  smallStatus: {
-    padding: '6px 12px',
-    borderRadius: '999px',
-    fontSize: '12px',
-    fontWeight: '600',
   },
 
   loadingContainer: {
@@ -552,7 +733,6 @@ const styles = {
     justifyContent: 'center',
     alignItems: 'center',
     gap: '16px',
-    color: '#64748b',
   },
 
   loader: {
@@ -561,7 +741,21 @@ const styles = {
     border: '4px solid #e2e8f0',
     borderTop: '4px solid #667eea',
     borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
+  },
+
+  errorContainer: {
+    textAlign: 'center',
+    padding: '50px',
+  },
+
+  errorBtn: {
+    marginTop: '20px',
+    backgroundColor: '#667eea',
+    color: 'white',
+    border: 'none',
+    padding: '10px 20px',
+    borderRadius: '10px',
+    cursor: 'pointer',
   },
 };
 

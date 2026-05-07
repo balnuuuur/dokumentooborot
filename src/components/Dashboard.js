@@ -123,7 +123,7 @@ function Dashboard() {
                 <tr key={doc.id}>
                   <td>{index + 1}</td>
                   <td>{doc.fileName}</td>
-                  <td>{doc.fileType?.split('/')[1] || 'unknown'}</td>
+                  <td>{doc?.fileName?.split('.').pop()?.toUpperCase() || 'unknown'}</td>
                   <td>{(doc.fileSize / 1024).toFixed(1)} KB</td>
                   <td>
                     <span style={{...styles.statusBadge, backgroundColor: getStatusColor(doc.status)}}>
