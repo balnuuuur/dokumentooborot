@@ -5,6 +5,7 @@ import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import Layout from './components/Layout';
 import Upload from './components/Upload';
+import Documents from './components/Documents';
 
 function App() {
   const token = localStorage.getItem('token');
@@ -16,6 +17,7 @@ function App() {
         <Route path="/register" element={token ? <Navigate to="/dashboard" /> : <Register />} />
         <Route element={token ? <Layout /> : <Navigate to="/login" />}>
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/documents" element={<Documents />} />
         <Route path="/upload" element={<Upload />} />
         <Route path="/" element={<Navigate to="/dashboard" />} />
       </Route>
