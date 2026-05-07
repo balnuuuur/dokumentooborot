@@ -18,8 +18,10 @@ function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
+      localStorage.removeItem('token');
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('username');
+    window.location.href = '/login';
   };
 
   const menuItems = [
