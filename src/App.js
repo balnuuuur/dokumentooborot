@@ -13,13 +13,21 @@ import DocumentDetail from './components/DocumentDetail';
 function App() {
   const token = localStorage.getItem('token');
 
+  if (!token) {
+      return (
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="*" element={<Navigate to="/login" />} />
+          </Routes>
+        </BrowserRouter>
+      );
+    }
+
   return (
      <BrowserRouter>
       <Routes>
-        <Route path="/login" element={!token ? <Login /> : <Navigate to="/dashboard" />} />
-        <Route path="/register" element={!token ? <Register /> : <Navigate to="/dashboard" />} />
-
-      {token && (
         <Route element={<Layout />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/documents" element={<Documents />} />
@@ -29,9 +37,9 @@ function App() {
         <Route path="/document/:id" element={<DocumentDetail />} />
         <Route path="/" element={<Navigate to="/dashboard" />} />
       </Route>
-    )}
-
-    <Route path="*" element={<Navigate to="/login" />} />
+      <Route path="/login" element={<Navigate to="/dashboard" />} />
+      <Route path="/register" element={<Navigate to="/dashboard" />} />
+      <Route path="*" element={<Navigate to="/dashboard" />} />
     </Routes>
     </BrowserRouter>
   );
