@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getMyDocuments, getAllDocuments, deleteDocument, searchDocuments } from '../services/api';
+import { getMyDocuments, getAllDocuments, deleteDocument, searchDocuments, getCommentsByDocument, deleteComment } from '../services/api';
 import { Link } from 'react-router-dom';
 
 function Dashboard() {
@@ -41,10 +41,16 @@ function Dashboard() {
   const handleDelete = async (id) => {
     if (window.confirm('Бұл құжатты жойғыңыз келе ме?')) {
       try {
+        const commentsRes = await getCommentsByDocument(id);
+        const comments = commentsRes.data.data || [];
+
+        for (const comment of comments) {
+                  await deleteComment(comment.id);
+        }
         await deleteDocument(id);
-        loadDocuments();
+        await loadDocuments();
       } catch (err) {
-        setError('Жою қатесі: ' + err.message);
+        setError('Жою қатесі: ' + (err.response?.data?.message || err.message));
       }
     }
   };
