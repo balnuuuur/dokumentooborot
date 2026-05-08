@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getMyDocuments, deleteDocument } from '../services/api';
+import { getMyDocuments, deleteDocument, getCommentsByDocument, deleteComment } from '../services/api';
 import { FiFileText, FiEye, FiTrash2, FiCalendar,} from 'react-icons/fi';
 
 function Documents() {
   const [documents, setDocuments] = useState([]);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     loadDocuments();
@@ -14,8 +15,9 @@ function Documents() {
     try {
       const res = await getMyDocuments();
       setDocuments(res.data.data || []);
+      setError('');
     } catch (err) {
-      console.error(err);
+      setError('Құжаттарды жүктеу қатесі');
     }
   };
 
@@ -23,9 +25,17 @@ function Documents() {
     if (window.confirm('Бұл құжатты жойғыңыз келе ме?')) {
       try {
         await deleteDocument(id);
-        loadDocuments();
+        const commentsRes = await getCommentsByDocument(id);
+        const comments = commentsRes.data.data || [];
+
+        for (const comment of comments) {
+          await deleteComment(comment.id);
+        }
+           await deleteDocument(id);
+           await loadDocuments();
       } catch (err) {
         console.error(err);
+        setError('Жою қатесі: ' + (err.response?.data?.message || err.message));
       }
     }
   };
