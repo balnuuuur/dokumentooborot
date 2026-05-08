@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -14,6 +16,13 @@ public class FileStorageService {
 
     @Value("${file.upload-dir:./uploads}")
     private String uploadDir;
+
+    private static final List<String> ALLOWED_TYPES = Arrays.asList(
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "text/plain"
+    );
 
     public String saveFile(MultipartFile file) throws IOException {
         Path uploadPath = Paths.get(uploadDir);
@@ -48,10 +57,14 @@ public class FileStorageService {
 
         if (originalFilename == null) return false;
 
-        return contentType != null && (
-                contentType.equals("application/pdf") ||
-                        contentType.equals("application/msword") ||
-                        contentType.equals("application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-        );
+        if (contentType != null && contentType.equals("text/plain")) {
+            return true;
+        }
+
+        if (originalFilename.endsWith(".txt")) {
+            return true;
+        }
+
+        return contentType != null && ALLOWED_TYPES.contains(contentType);
     }
 }
