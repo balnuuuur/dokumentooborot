@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getDocumentById, addComment, getCommentsByDocument, deleteComment, updateComment } from '../services/api';
-import { FiDownload, FiMessageSquare, FiCalendar, FiClock, FiArrowLeft,
-         FiFileText, FiChevronLeft, FiChevronRight, FiTrash2, FiEdit2, FiCheck, FiX } from 'react-icons/fi';
+import { FiDownload, FiMessageSquare, FiCalendar, FiClock, FiArrowLeft, FiFileText, FiTrash2, FiEdit2, FiCheck, FiX } from 'react-icons/fi';
 
 function DocumentDetail() {
   const { id } = useParams();
@@ -11,8 +10,7 @@ function DocumentDetail() {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [pdfUrl, setPdfUrl] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [numPages, setNumPages] = useState(12);
+  const [textPreview, setTextPreview] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editingCommentId, setEditingCommentId] = useState(null);
@@ -33,7 +31,7 @@ function DocumentDetail() {
 
       setDoc(documentData);
 
-      await loadPdfPreview();
+      await loadPreview(documentData);
     } catch (err) {
       console.error(err);
       setError('Құжатты жүктеу қатесі');
@@ -41,7 +39,7 @@ function DocumentDetail() {
     }
   };
 
-  const loadPdfPreview = async () => {
+  const loadPreview = async (documentData) => {
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(
@@ -54,16 +52,28 @@ function DocumentDetail() {
       );
 
       if (!response.ok) {
-        throw new Error('PDF жүктелмеді');
+        throw new Error('Файл жүктелмеді');
       }
 
+      if (documentData?.fileType?.includes('pdf')) {
       const blob = await response.blob();
       const localUrl = URL.createObjectURL(blob);
       setPdfUrl(localUrl);
+      }
+
+      else if (
+        documentData?.fileType?.includes('text') ||
+        documentData?.fileName?.toLowerCase().endsWith('.txt')
+      ) {
+        const text = await response.text();
+        setTextPreview(text);
+      }
+
       setLoading(false);
     } catch (err) {
       console.error(err);
       setPdfUrl(null);
+      setTextPreview('');
       setLoading(false);
     }
   };
@@ -106,6 +116,14 @@ function DocumentDetail() {
       }
     };
 
+    const canEditComment = (commentId) => {
+    const comment = comments.find((c) => c.id === commentId);
+
+     if (!comment) return false;
+
+     return comment.author?.username === currentUser;
+  };
+
     const startEditComment = (commentId, currentContent) => {
         if (!canEditComment(commentId)) {
           alert('Сіз бұл пікірді өңдей алмайсыз');
@@ -134,12 +152,6 @@ function DocumentDetail() {
     const cancelEditComment = () => {
         setEditingCommentId(null);
         setEditContent('');
-      };
-
-    const canEditComment = (commentId) => {
-        const comment = comments.find(c => c.id === commentId);
-        if (!comment) return false;
-        return comment.author?.username === currentUser;
       };
 
   const handleDownload = async () => {
@@ -214,18 +226,6 @@ function DocumentDetail() {
 
       default:
         return 'Жоба';
-    }
-  };
-
-  const goToPrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-
-  const goToNextPage = () => {
-    if (currentPage < numPages) {
-      setCurrentPage(currentPage + 1);
     }
   };
 
@@ -312,16 +312,24 @@ function DocumentDetail() {
             </div>
 
             <div style={styles.pdfContainer}>
-              {pdfUrl && doc?.fileType?.includes('pdf') ? (
-                <>
+              {doc?.fileType?.includes('pdf') && pdfUrl ? (
+
                   <object
-                    data={`${pdfUrl}#page=${currentPage}`}
+                  data={pdfUrl}
                     type="application/pdf"
                     style={styles.pdfIframe}
                   >
                     <p>PDF ашылмады</p>
                   </object>
-                </>
+
+              ) : doc?.fileType?.includes('text') ||
+                doc?.fileName?.toLowerCase().endsWith('.txt') ? (
+
+                <div style={styles.txtPreview}>
+                  <pre style={styles.txtContent}>
+                    {textPreview}
+                  </pre>
+                </div>
               ) : (
                 <div style={styles.previewBox}>
                   <FiFileText
@@ -382,9 +390,7 @@ function DocumentDetail() {
                       <span style={styles.commentDate}>
                         <FiClock size={12} />
 
-                        {new Date(
-                          c.createdAt
-                        ).toLocaleString()}
+                        {new Date(c.createdAt).toLocaleString()}
                       </span>
                     </div>
 
@@ -397,34 +403,53 @@ function DocumentDetail() {
                          autoFocus
                         />
                       <div style={styles.editButtons}>
-                      <button onClick={() => saveEditComment(c.id)} style={styles.saveEditBtn}>
-                         <FiCheck size={16} /> Сақтау
+                          <button
+                            onClick={() => saveEditComment(c.id)}
+                            style={styles.saveEditBtn}
+                          >
+                            <FiCheck size={16} />
+                            Сақтау
                       </button>
-                      <button onClick={cancelEditComment} style={styles.cancelEditBtn}>
-                         <FiX size={16} /> Болдырмау
+
+                          <button
+                            onClick={cancelEditComment}
+                            style={styles.cancelEditBtn}
+                          >
+                            <FiX size={16} />
+                            Болдырмау
                        </button>
                     </div>
                  </div>
                     ) : (
-                 <p style={styles.commentText}>{c.content}</p>
+                      <p style={styles.commentText}>
+                        {c.content}
+                      </p>
+
                  )}
                  </div>
 
                   <div style={styles.commentActions}>
                      {canEditComment(c.id) && (
                      <button
-                       onClick={() => startEditComment(c.id, c.content)}
+                        onClick={() =>
+                          startEditComment(c.id, c.content)
+                        }
                        style={styles.editCommentBtn}
-                       title="Пікірді өңдеу"
                        >
                        <FiEdit2 size={16} />
                      </button>
                      )}
-                    {(c.author?.username === currentUser || userRole === 'ADMIN') && (
+
+                    {(c.author?.username === currentUser ||
+                      userRole === 'ADMIN') && (
                   <button
-                    onClick={() => handleDeleteComment(c.id, c.author?.username)}
+                        onClick={() =>
+                          handleDeleteComment(
+                            c.id,
+                            c.author?.username
+                          )
+                        }
                     style={styles.deleteCommentBtn}
-                    title="Пікірді жою"
                     >
                     <FiTrash2 size={16} />
                   </button>
@@ -501,7 +526,10 @@ function DocumentDetail() {
               </span>
 
               <span style={styles.infoValue}>
-                {doc?.fileName?.split('.').pop()?.toUpperCase()}
+                {doc?.fileName
+                  ?.split('.')
+                  .pop()
+                  ?.toUpperCase()}
               </span>
             </div>
 
@@ -649,42 +677,26 @@ const styles = {
     backgroundColor: '#f8fafc',
   },
 
-  pdfToolbar: {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: '18px',
-    padding: '12px',
-    backgroundColor: '#f1f5f9',
-  },
-
-  pdfNavBtn: {
-    backgroundColor: '#667eea',
-    color: 'white',
-    border: 'none',
-    width: '42px',
-    height: '42px',
-    borderRadius: '12px',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  pdfNavBtnDisabled: {
-    opacity: 0.5,
-    cursor: 'not-allowed',
-  },
-
-  pageInfo: {
-    fontWeight: '600',
-    color: '#475569',
-  },
-
   pdfIframe: {
     width: '100%',
     height: '700px',
     border: 'none',
+  },
+
+  txtPreview: {
+    padding: '24px',
+    backgroundColor: '#fff',
+    maxHeight: '700px',
+    overflowY: 'auto',
+  },
+
+  txtContent: {
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-word',
+    fontSize: '14px',
+    lineHeight: '1.7',
+    color: '#334155',
+    fontFamily: 'monospace',
   },
 
   previewBox: {
@@ -768,8 +780,8 @@ const styles = {
   commentActions: {
     display: 'flex',
     gap: '4px',
-    flexShrink: 0
-    },
+    flexShrink: 0,
+  },
 
   editCommentBtn: {
     background: 'none',
@@ -777,11 +789,7 @@ const styles = {
     color: '#667eea',
     cursor: 'pointer',
     padding: '8px',
-    borderRadius: '8px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'all 0.2s' },
+  },
 
   deleteCommentBtn: {
     background: 'none',
@@ -789,37 +797,29 @@ const styles = {
     color: '#ef4444',
     cursor: 'pointer',
     padding: '8px',
-    borderRadius: '8px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'all 0.2s'
-    },
+  },
 
   editContainer: {
     width: '100%',
-    marginTop: '8px'
-    },
+    marginTop: '8px',
+  },
 
   editTextarea: {
     width: '100%',
     padding: '12px',
     borderRadius: '12px',
     border: '1px solid #6366f1',
-    fontSize: '14px',
-    fontFamily: 'inherit',
     resize: 'vertical',
     minHeight: '80px',
     marginBottom: '10px',
     outline: 'none',
-    backgroundColor: '#fff'
-    },
+  },
 
   editButtons: {
     display: 'flex',
     gap: '10px',
-    justifyContent: 'flex-end'
-    },
+    justifyContent: 'flex-end',
+  },
 
   saveEditBtn: {
     backgroundColor: '#10b981',
@@ -828,12 +828,7 @@ const styles = {
     padding: '6px 14px',
     borderRadius: '8px',
     cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-    fontSize: '13px',
-    fontWeight: '500'
-    },
+  },
 
   cancelEditBtn: {
     backgroundColor: '#6b7280',
@@ -842,12 +837,7 @@ const styles = {
     padding: '6px 14px',
     borderRadius: '8px',
     cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-    fontSize: '13px',
-    fontWeight: '500'
-    },
+  },
 
   commentInputBox: {
     marginTop: '20px',
