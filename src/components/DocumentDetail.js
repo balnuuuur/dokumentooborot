@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getDocumentById, addComment, getCommentsByDocument } from '../services/api';
-import { FiDownload, FiMessageSquare, FiCalendar, FiClock, FiArrowLeft, FiFileText, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { getDocumentById, addComment, getCommentsByDocument, deleteComment, updateComment } from '../services/api';
+import { FiDownload, FiMessageSquare, FiCalendar, FiClock, FiArrowLeft,
+         FiFileText, FiChevronLeft, FiChevronRight, FiTrash2, FiEdit2, FiCheck, FiX } from 'react-icons/fi';
 
 function DocumentDetail() {
   const { id } = useParams();
@@ -14,6 +15,11 @@ function DocumentDetail() {
   const [numPages, setNumPages] = useState(12);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editContent, setEditContent] = useState('');
+
+  const currentUser = localStorage.getItem('username');
+  const userRole = localStorage.getItem('userRole');
 
   useEffect(() => {
     loadDocument();
@@ -82,6 +88,59 @@ function DocumentDetail() {
       console.error(err);
     }
   };
+
+  const handleDeleteComment = async (commentId, commentAuthor) => {
+      if (commentAuthor !== currentUser && userRole !== 'ADMIN') {
+        alert('Сіз бұл пікірді өшіре алмайсыз');
+        return;
+      }
+
+      if (window.confirm('Бұл пікірді жойғыңыз келе ме?')) {
+        try {
+          await deleteComment(commentId);
+          loadComments();
+        } catch (err) {
+          console.error(err);
+          alert('Пікірді жою қатесі');
+        }
+      }
+    };
+
+    const startEditComment = (commentId, currentContent) => {
+        if (!canEditComment(commentId)) {
+          alert('Сіз бұл пікірді өңдей алмайсыз');
+          return;
+        }
+        setEditingCommentId(commentId);
+        setEditContent(currentContent);
+      };
+
+    const saveEditComment = async (commentId) => {
+        if (!editContent.trim()) {
+          alert('Пікір бос болуы мүмкін емес');
+          return;
+        }
+        try {
+          await updateComment(commentId, editContent);
+          setEditingCommentId(null);
+          setEditContent('');
+          loadComments();
+        } catch (err) {
+          console.error(err);
+          alert('Пікірді өңдеу қатесі');
+        }
+      };
+
+    const cancelEditComment = () => {
+        setEditingCommentId(null);
+        setEditContent('');
+      };
+
+    const canEditComment = (commentId) => {
+        const comment = comments.find(c => c.id === commentId);
+        if (!comment) return false;
+        return comment.author?.username === currentUser;
+      };
 
   const handleDownload = async () => {
     try {
@@ -329,9 +388,47 @@ function DocumentDetail() {
                       </span>
                     </div>
 
-                    <p style={styles.commentText}>
-                      {c.content}
-                    </p>
+                    {editingCommentId === c.id ? (
+                      <div style={styles.editContainer}>
+                         <textarea
+                         value={editContent}
+                         onChange={(e) => setEditContent(e.target.value)}
+                         style={styles.editTextarea}
+                         autoFocus
+                        />
+                      <div style={styles.editButtons}>
+                      <button onClick={() => saveEditComment(c.id)} style={styles.saveEditBtn}>
+                         <FiCheck size={16} /> Сақтау
+                      </button>
+                      <button onClick={cancelEditComment} style={styles.cancelEditBtn}>
+                         <FiX size={16} /> Болдырмау
+                       </button>
+                    </div>
+                 </div>
+                    ) : (
+                 <p style={styles.commentText}>{c.content}</p>
+                 )}
+                 </div>
+
+                  <div style={styles.commentActions}>
+                     {canEditComment(c.id) && (
+                     <button
+                       onClick={() => startEditComment(c.id, c.content)}
+                       style={styles.editCommentBtn}
+                       title="Пікірді өңдеу"
+                       >
+                       <FiEdit2 size={16} />
+                     </button>
+                     )}
+                    {(c.author?.username === currentUser || userRole === 'ADMIN') && (
+                  <button
+                    onClick={() => handleDeleteComment(c.id, c.author?.username)}
+                    style={styles.deleteCommentBtn}
+                    title="Пікірді жою"
+                    >
+                    <FiTrash2 size={16} />
+                  </button>
+                )}
                   </div>
                 </div>
               ))
@@ -667,6 +764,90 @@ const styles = {
     color: '#475569',
     lineHeight: '1.6',
   },
+
+  commentActions: {
+    display: 'flex',
+    gap: '4px',
+    flexShrink: 0
+    },
+
+  editCommentBtn: {
+    background: 'none',
+    border: 'none',
+    color: '#667eea',
+    cursor: 'pointer',
+    padding: '8px',
+    borderRadius: '8px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.2s' },
+
+  deleteCommentBtn: {
+    background: 'none',
+    border: 'none',
+    color: '#ef4444',
+    cursor: 'pointer',
+    padding: '8px',
+    borderRadius: '8px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.2s'
+    },
+
+  editContainer: {
+    width: '100%',
+    marginTop: '8px'
+    },
+
+  editTextarea: {
+    width: '100%',
+    padding: '12px',
+    borderRadius: '12px',
+    border: '1px solid #6366f1',
+    fontSize: '14px',
+    fontFamily: 'inherit',
+    resize: 'vertical',
+    minHeight: '80px',
+    marginBottom: '10px',
+    outline: 'none',
+    backgroundColor: '#fff'
+    },
+
+  editButtons: {
+    display: 'flex',
+    gap: '10px',
+    justifyContent: 'flex-end'
+    },
+
+  saveEditBtn: {
+    backgroundColor: '#10b981',
+    color: 'white',
+    border: 'none',
+    padding: '6px 14px',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    fontSize: '13px',
+    fontWeight: '500'
+    },
+
+  cancelEditBtn: {
+    backgroundColor: '#6b7280',
+    color: 'white',
+    border: 'none',
+    padding: '6px 14px',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    fontSize: '13px',
+    fontWeight: '500'
+    },
 
   commentInputBox: {
     marginTop: '20px',
