@@ -29,7 +29,7 @@ public class DocumentService {
     private final AuditLogRepository auditLogRepository;
     private final NotificationService notificationService;
 
-    public Document uploadDocument(MultipartFile file, String username, String description) throws IOException {
+    public Document uploadDocument(MultipartFile file, String username, String description, String category) throws IOException {
         if (file.isEmpty()) {
             throw new RuntimeException("Файл бос. Құжат таңдаңыз.");
         }
@@ -49,6 +49,8 @@ public class DocumentService {
         document.setFileSize(file.getSize());
         document.setOwner(owner);
         document.setStatus(DocumentStatus.DRAFT);
+        document.setDescription(description);
+        document.setCategory(category);
 
         Document savedDocument = documentRepository.save(document);
 

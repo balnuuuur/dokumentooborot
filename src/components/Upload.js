@@ -62,7 +62,7 @@ function Upload() {
     setSuccess('');
 
     try {
-      await uploadDocument(file, description);
+      await uploadDocument(file, description, category);
       setSuccess('Құжат сәтті жүктелді!');
       setTimeout(() => navigate('/documents'), 2000);
     } catch (err) {

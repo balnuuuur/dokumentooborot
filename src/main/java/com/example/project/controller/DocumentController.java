@@ -26,12 +26,13 @@ public class DocumentController {
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<Document> uploadDocument(
             @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "description", required = false) String description) {
+            @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "category", required = false) String category) {
 
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
         try {
-            Document document = documentService.uploadDocument(file, username, description);
+            Document document = documentService.uploadDocument(file, username, description, category);
             return ApiResponse.success("Құжат сәтті жүктелді", document);
         } catch (Exception e) {
             return ApiResponse.error(e.getMessage());

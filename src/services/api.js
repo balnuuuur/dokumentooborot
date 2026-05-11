@@ -42,10 +42,11 @@ export const login = (username, password) => {
   return api.post('/auth/login', { username, password });
 };
 
-export const uploadDocument = (file, description) => {
+export const uploadDocument = (file, description, category) => {
   const formData = new FormData();
   formData.append('file', file);
   if (description) formData.append('description', description);
+  if (category) formData.append('category', category);
 
   return api.post('/documents/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },

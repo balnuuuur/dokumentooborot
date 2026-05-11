@@ -44,6 +44,10 @@ public class Document {
         }
     }
 
+    @Column(columnDefinition = "TEXT")
+    private String description;
+    private String category;
+
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();

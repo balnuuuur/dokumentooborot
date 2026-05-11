@@ -278,6 +278,11 @@ function DocumentDetail() {
                 {doc?.description || 'Сипаттама қосылмаған'}
               </p>
 
+              <div style={styles.infoRow}>
+                <span style={styles.infoLabel}>Санат</span>
+                <span style={styles.infoValue}>{doc?.category || 'Жоқ'}</span>
+              </div>
+
               <div style={styles.topInfo}>
                 <span
                   style={{
