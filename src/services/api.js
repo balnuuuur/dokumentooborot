@@ -78,9 +78,12 @@ export const previewDocument = (id) => {
 };
 
 export const searchDocuments = (keyword, status) => {
-  let url = '/documents/search?';
-  if (keyword) url += `keyword=${keyword}&`;
-  if (status) url += `status=${status}`;
+  const params = new URLSearchParams();
+    if (keyword && keyword.trim()) params.append('keyword', keyword.trim());
+    if (status && status.trim()) params.append('status', status.trim());
+
+    const url = `/documents/advanced-search?${params.toString()}`;
+    console.log('Search URL:', url);
   return api.get(url);
 };
 
