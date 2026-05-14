@@ -9,6 +9,7 @@ import Documents from './components/Documents';
 import Notifications from './components/Notifications';
 import AdminPanel from './components/AdminPanel';
 import DocumentDetail from './components/DocumentDetail';
+import AdminLogin from './components/AdminLogin';
 
 function App() {
   const token = localStorage.getItem('token');
@@ -19,6 +20,7 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/admin-login" element={<AdminLogin />} />
             <Route path="*" element={<Navigate to="/login" />} />
           </Routes>
         </BrowserRouter>
@@ -39,6 +41,7 @@ function App() {
       </Route>
       <Route path="/login" element={<Navigate to="/dashboard" />} />
       <Route path="/register" element={<Navigate to="/dashboard" />} />
+      <Route path="/admin-login" element={<Navigate to="/dashboard" />} />
       <Route path="*" element={<Navigate to="/dashboard" />} />
     </Routes>
     </BrowserRouter>

@@ -75,7 +75,11 @@ function Login() {
           </form>
 
           <p style={styles.registerLink}>
-            Тіркелмегенсіз бе? <Link to="/register" style={styles.link}>Тіркелу</Link>
+            Тіркелмегенсіз бе? <Link to="/register" style={styles.link}>Тіркелу
+            <div style={styles.adminLinkContainer}>
+              <Link to="/admin-login" style={styles.adminLink}>Әкімшілік</Link>
+            </div>
+            </Link>
           </p>
         </div>
       </div>
@@ -175,6 +179,21 @@ const styles = {
     marginBottom: '20px',
     fontSize: '14px',
     textAlign: 'center',
+  },
+  adminLinkContainer: {
+    textAlign: 'center',
+    marginTop: '16px',
+    paddingTop: '16px',
+    borderTop: '1px solid #e5e7eb',
+  },
+  adminLink: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    color: '#6366f1',
+    textDecoration: 'none',
+    fontSize: '14px',
+    fontWeight: '500',
   },
 };
 

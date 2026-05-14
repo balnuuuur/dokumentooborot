@@ -49,9 +49,6 @@ function AdminLogin() {
       <div style={styles.card}>
         <div style={styles.formContainer}>
           <div style={styles.iconContainer}>
-            <div style={styles.adminBadge}>
-              <FiShield size={42} />
-            </div>
           </div>
 
           <h1 style={styles.title}>Әкімшілік кіру</h1>
@@ -118,6 +115,7 @@ function AdminLogin() {
       </div>
     </div>
   );
+ }
 
 const styles = {
   container: {
@@ -211,7 +209,7 @@ const styles = {
   button: {
     width: '100%',
     padding: '14px',
-    background: 'linear-gradient(135deg,#667eea,#764ba2)',
+    background: '#667eea',
     color: 'white',
     border: 'none',
     borderRadius: '12px',
@@ -231,7 +229,7 @@ const styles = {
     color: '#667eea',
     textDecoration: 'none',
     fontSize: '14px',
-    fontWeight: '600',
+    fontWeight: '500',
   },
 
   error: {
