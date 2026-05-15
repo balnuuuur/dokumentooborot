@@ -24,6 +24,7 @@ public class CommentService {
                 .orElseThrow(() -> new RuntimeException("Құжат табылмады. ID: " + documentId));
 
         User author = userService.findByUsername(username);
+        User documentOwner = document.getOwner();
 
         Comment comment = new Comment();
         comment.setContent(content);
@@ -34,13 +35,23 @@ public class CommentService {
 
         auditService.log(username, "Пікір қалдырылды: " + document.getFileName(), documentId);
 
+        String commentPreview = content.length() > 50 ? content.substring(0, 50) + "..." : content;
+
+        if (documentOwner != null && !documentOwner.getUsername().equals(username)) {
+            notificationService.createNotification(
+                    documentOwner,
+                    "Жаңа пікір",
+                    author.getUsername() + " " + document.getFileName() + " құжатыңызға пікір қалдырды: " + commentPreview,
+                    documentId
+            );
+        }
+
         User admin = userService.findByRoleAdmin();
-        if (admin != null) {
-            String preview = content.length() > 50 ? content.substring(0, 50) + "..." : content;
+        if (admin != null && !admin.getUsername().equals(username)) {
             notificationService.createNotification(
                     admin,
                     "Жаңа пікір",
-                    username + " " + document.getFileName() + " құжатына пікір қалдырды: " + preview,
+                    author.getUsername() + " " + document.getFileName() + " құжатына пікір қалдырды: " + commentPreview,
                     documentId
             );
         }

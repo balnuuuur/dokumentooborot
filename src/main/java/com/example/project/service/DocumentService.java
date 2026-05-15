@@ -57,7 +57,7 @@ public class DocumentService {
         saveAuditLog(username, ActionType.UPLOAD, "Құжат жүктелді: " + document.getFileName(), savedDocument.getId());
 
         User admin = userService.findByRoleAdmin();
-        if (admin != null) {
+        if (admin != null && !admin.getUsername().equals(username)) {
             notificationService.createNotification(
                     admin,
                     "Жаңа құжат жүктелді",
@@ -86,7 +86,7 @@ public class DocumentService {
         Document document = getDocumentById(documentId);
         DocumentStatus oldStatus = document.getStatus();
         DocumentStatus newStatus = request.getStatus();
-
+        User owner = document.getOwner();
         document.setStatus(newStatus);
 
         if (newStatus == DocumentStatus.REJECTED) {
@@ -102,8 +102,20 @@ public class DocumentService {
         String actionMessage = "Статус өзгертілді: " + oldStatus + " - " + newStatus;
         saveAuditLog(adminUsername, ActionType.UPDATE_STATUS, actionMessage, documentId);
 
-        notificationService.sendStatusNotification(document, oldStatus, newStatus);
+        if (owner != null && !owner.getUsername().equals(adminUsername)) {
+            String message = newStatus == DocumentStatus.APPROVED
+                    ? "Құжатыңыз бекітілді"
+                    : (newStatus == DocumentStatus.REJECTED
+                    ? "Құжатыңыз қабылданбады. Себебі: " + request.getRejectionReason()
+                    : "Құжатыңыз қарау сатысына өтті");
 
+            notificationService.createNotification(
+                    owner,
+                    "Құжат статусы өзгерді",
+                    message,
+                    documentId
+            );
+        }
         return updatedDocument;
     }
 
