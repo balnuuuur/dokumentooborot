@@ -56,6 +56,15 @@ public class DocumentService {
 
         saveAuditLog(username, ActionType.UPLOAD, "Құжат жүктелді: " + document.getFileName(), savedDocument.getId());
 
+        User admin = userService.findByRoleAdmin();
+        if (admin != null) {
+            notificationService.createNotification(
+                    admin,
+                    "Жаңа құжат жүктелді",
+                    username + " " + document.getFileName() + " құжатын жүктеді.",
+                    savedDocument.getId()
+            );
+        }
         return savedDocument;
     }
 

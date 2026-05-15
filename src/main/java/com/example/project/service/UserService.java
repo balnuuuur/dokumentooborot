@@ -56,4 +56,8 @@ public class UserService {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Пайдаланушы табылмады: " + username));
     }
+
+    public User findByRoleAdmin() {
+        return userRepository.findByRole(Role.ADMIN);
+    }
 }

@@ -17,6 +17,7 @@ public class CommentService {
     private final DocumentRepository documentRepository;
     private final UserService userService;
     private final AuditService auditService;
+    private final NotificationService notificationService;
 
     public Comment addComment(Long documentId, String username, String content) {
         Document document = documentRepository.findById(documentId)
@@ -33,6 +34,16 @@ public class CommentService {
 
         auditService.log(username, "Пікір қалдырылды: " + document.getFileName(), documentId);
 
+        User admin = userService.findByRoleAdmin();
+        if (admin != null) {
+            String preview = content.length() > 50 ? content.substring(0, 50) + "..." : content;
+            notificationService.createNotification(
+                    admin,
+                    "Жаңа пікір",
+                    username + " " + document.getFileName() + " құжатына пікір қалдырды: " + preview,
+                    documentId
+            );
+        }
         return saved;
     }
 
