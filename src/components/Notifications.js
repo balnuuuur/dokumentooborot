@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getNotifications, markAsRead, markAllAsRead, } from '../services/api';
-import { FiBell, FiCheckCircle, FiClock, FiFilter, } from 'react-icons/fi';
+import { FiBell, FiCheckCircle, FiClock, FiFilter, FiUser, FiMessageSquare, FiFileText } from 'react-icons/fi';
 
 function Notifications() {
   const [notifications, setNotifications] = useState([]);
@@ -9,6 +9,8 @@ function Notifications() {
 
   useEffect(() => {
     loadNotifications();
+    const interval = setInterval(loadNotifications, 30000);
+        return () => clearInterval(interval);
   }, []);
 
   const loadNotifications = async () => {
@@ -65,6 +67,24 @@ function Notifications() {
         (1000 * 3600 * 24) <
       7
   ).length;
+
+  const getNotificationIcon = (type) => {
+      switch(type) {
+        case 'UPLOAD': return <FiFileText size={20} />;
+        case 'COMMENT': return <FiMessageSquare size={20} />;
+        case 'STATUS_CHANGE': return <FiClock size={20} />;
+        default: return <FiBell size={20} />;
+      }
+    };
+
+    const getNotificationColor = (type) => {
+      switch(type) {
+        case 'UPLOAD': return { bg: '#dbeafe', color: '#2563eb' };
+        case 'COMMENT': return { bg: '#dcfce7', color: '#16a34a' };
+        case 'STATUS_CHANGE': return { bg: '#fef3c7', color: '#d97706' };
+        default: return { bg: '#f3e8ff', color: '#9333ea' };
+      }
+    };
 
   return (
     <div style={styles.container}>
@@ -185,7 +205,9 @@ function Notifications() {
             </p>
           </div>
         ) : (
-          filteredNotifications.map((notif) => (
+          filteredNotifications.map((notif) => {
+            const iconColor = getNotificationColor(notif.type);
+         return (
             <div
               key={notif.id}
               style={
@@ -198,20 +220,19 @@ function Notifications() {
               }
             >
               <div
-                style={
-                  notif.read
-                    ? styles.iconWrapperGray
-                    : styles.iconWrapper
-                }
+                  style={{
+                    ...styles.iconWrapper,
+                    backgroundColor: iconColor.bg,
+                    color: iconColor.color,
+                  }}
               >
-                <FiBell size={20} />
+                  {getNotificationIcon(notif.type)}
               </div>
 
               <div style={styles.notificationContent}>
                 <div style={styles.topRow}>
                   <h3 style={styles.notificationTitle}>
-                    {notif.title ||
-                      'Құжат жаңартылды'}
+                      {notif.title}
                   </h3>
 
                   {!notif.read && (
@@ -222,13 +243,10 @@ function Notifications() {
                 </div>
 
                 <p style={styles.notificationMessage}>
-                  {notif.message || notif.action}
+                    {notif.message}
                 </p>
-
                 <p style={styles.notificationDate}>
-                  {new Date(
-                    notif.createdAt
-                  ).toLocaleString()}
+                    {new Date(notif.createdAt).toLocaleString()}
                 </p>
               </div>
 
@@ -244,7 +262,8 @@ function Notifications() {
                 </button>
               )}
             </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

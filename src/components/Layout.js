@@ -1,21 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
-import {
-  FiHome,
-  FiFileText,
-  FiUpload,
-  FiBell,
-  FiSettings,
-  FiLogOut,
-  FiUsers,
-  FiMenu
-} from 'react-icons/fi';
+import { getUnreadCount } from '../services/api';
+import { FiHome, FiFileText, FiUpload, FiBell, FiSettings, FiLogOut, FiUsers, FiMenu, FiUser, FiShield } from 'react-icons/fi';
 
 function Layout() {
   const navigate = useNavigate();
   const userRole = localStorage.getItem('userRole');
   const username = localStorage.getItem('username') || 'Қолданушы';
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const loadUnreadCount = async () => {
+      try {
+        const res = await getUnreadCount();
+        setUnreadCount(res.data.data || 0);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    useEffect(() => {
+      loadUnreadCount();
+      const interval = setInterval(loadUnreadCount, 30000);
+      return () => clearInterval(interval);
+    }, []);
 
   const handleLogout = () => {
       localStorage.removeItem('token');
@@ -44,7 +53,18 @@ function Layout() {
             if (!item.roles.includes(userRole)) return null;
             return (
               <Link key={item.path} to={item.path} style={styles.navItem}>
+                {item.path === '/notifications' ? (
+                <div style={{ position: 'relative' }}>
                 {item.icon}
+                {unreadCount > 0 && (
+                <span style={styles.notificationBadge}>
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+               )}
+             </div>
+             ) : (
+             item.icon
+           )}
                 {sidebarOpen && <span>{item.label}</span>}
               </Link>
             );
@@ -182,6 +202,22 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
+  },
+
+  notificationBadge: {
+    position: 'absolute',
+    top: '-8px',
+    right: '-12px',
+    backgroundColor: '#ef4444',
+    color: 'white',
+    borderRadius: '50%',
+    width: '18px',
+    height: '18px',
+    fontSize: '10px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: 'bold',
   },
 
   avatar: {
