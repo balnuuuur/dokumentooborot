@@ -44,31 +44,27 @@ function Notifications() {
   };
 
   const filteredNotifications = notifications.filter((n) => {
-    const daysDiff =
-      (new Date() - new Date(n.createdAt)) /
-      (1000 * 3600 * 24);
+      const notificationDate = new Date(n.createdAt);
+      const today = new Date();
+      const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - today.getDay());
 
-    if (filter === 'today') return daysDiff < 1;
-    if (filter === 'week') return daysDiff < 7;
-
+      if (filter === 'today') {
+        return notificationDate >= startOfToday;
+      }
+      if (filter === 'week') {
+        return notificationDate >= startOfWeek;
+      }
     return true;
   });
 
-  const todayCount = notifications.filter(
-    (n) =>
-      (new Date() - new Date(n.createdAt)) /
-        (1000 * 3600 * 24) <
-      1
-  ).length;
+  const today = new Date();
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
+  const todayCount = notifications.filter((n) => new Date(n.createdAt) >= startOfToday).length;
   const allCount = notifications.length;
-
-  const weekCount = notifications.filter(
-    (n) =>
-      (new Date() - new Date(n.createdAt)) /
-        (1000 * 3600 * 24) <
-      7
-  ).length;
+  const unreadCountValue = notifications.filter((n) => !n.read).length;
 
   const getNotificationIcon = (type) => {
       switch(type) {
