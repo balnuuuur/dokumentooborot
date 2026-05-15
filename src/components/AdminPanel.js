@@ -49,10 +49,8 @@ function AdminPanel() {
 
   const stats = {
     pending: documents.filter(d => d.status === 'IN_REVIEW').length,
-    approved: documents.filter(d => d.status === 'APPROVED' &&
-      new Date(d.updatedAt).toDateString() === new Date().toDateString()).length,
-    rejected: documents.filter(d => d.status === 'REJECTED' &&
-      new Date(d.updatedAt).toDateString() === new Date().toDateString()).length,
+    approved: documents.filter(d => d.status === 'APPROVED').length,
+    rejected: documents.filter(d => d.status === 'REJECTED').length,
   };
 
   const currentDocuments = getFilteredDocuments(filterStatus);
@@ -116,7 +114,7 @@ function AdminPanel() {
         >
           <div style={styles.greenIcon}><FiCheckCircle size={24} /></div>
           <div>
-            <p style={styles.statLabel}>Бүгін бекітілген</p>
+            <p style={styles.statLabel}>Бекітілген</p>
             <h2 style={styles.statValue}>{stats.approved}</h2>
           </div>
         </div>
@@ -127,7 +125,7 @@ function AdminPanel() {
         >
           <div style={styles.redIcon}><FiXCircle size={24} /></div>
           <div>
-            <p style={styles.statLabel}>Бүгін қабылданбаған</p>
+            <p style={styles.statLabel}>Қабылданбаған</p>
             <h2 style={styles.statValue}>{stats.rejected}</h2>
           </div>
         </div>
