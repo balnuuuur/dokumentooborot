@@ -61,6 +61,8 @@ function Notifications() {
       1
   ).length;
 
+  const allCount = notifications.length;
+
   const weekCount = notifications.filter(
     (n) =>
       (new Date() - new Date(n.createdAt)) /
@@ -134,15 +136,10 @@ function Notifications() {
         </div>
 
         <div style={styles.statCard}>
-          <div style={styles.statIconGreen}>
-            <FiFilter size={22} />
-          </div>
-
+          <div style={styles.statIconGreen}><FiFilter size={22} /></div>
           <div>
-            <p style={styles.statLabel}>Осы апта</p>
-            <h3 style={styles.statValue}>
-              {weekCount}
-            </h3>
+            <p style={styles.statLabel}>Барлығы</p>
+            <h3 style={styles.statValue}>{allCount}</h3>
           </div>
         </div>
       </div>
