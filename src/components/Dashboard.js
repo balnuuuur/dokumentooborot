@@ -19,7 +19,11 @@ function Dashboard() {
       const response = userRole === 'ADMIN'
         ? await getAllDocuments()
         : await getMyDocuments();
-      setDocuments(response.data.data || []);
+      let docs = response.data.data || [];
+       if (userRole === 'ADMIN') {
+              docs = docs.filter(doc => doc.status === 'DRAFT');
+            }
+      setDocuments(docs);
     } catch (err) {
       setError('Құжаттарды жүктеу қатесі: ' + err.message);
     } finally {
@@ -44,8 +48,13 @@ function Dashboard() {
       const response = await searchDocuments(searchKeyword, searchStatus);
 
       if (response.data.success) {
-      setDocuments(response.data.data || []);
-        if (response.data.data?.length === 0) {
+        let docs = response.data.data || [];
+
+       if (userRole === 'ADMIN') {
+        docs = docs.filter(doc => doc.status === 'DRAFT');
+         }
+          setDocuments(docs);
+          if (docs.length === 0) {
           setError('Сұраныс бойынша құжаттар жоқ');
         }
       } else {
@@ -92,7 +101,7 @@ function Dashboard() {
     try {
       setLoading(true);
       await updateDocumentStatus(id, 'IN_REVIEW', null);
-      await loadDocuments();
+      setDocuments(prevDocs => prevDocs.filter(doc => doc.id !== id));
     } catch (err) {
       setError('Статусты өзгерту қатесі: ' + (err.response?.data?.message || err.message));
     } finally {
