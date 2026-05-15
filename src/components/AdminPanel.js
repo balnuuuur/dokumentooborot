@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { getAllDocuments } from '../services/api';
-import { FiClock, FiCheckCircle, FiXCircle, FiUsers, FiFileText, FiEye } from 'react-icons/fi';
+import { getAllDocuments, deleteDocument, getCommentsByDocument, deleteComment } from '../services/api';
+import { FiClock, FiCheckCircle, FiXCircle, FiUsers, FiFileText, FiEye, FiTrash2 } from 'react-icons/fi';
 
 function AdminPanel() {
   const navigate = useNavigate();
@@ -21,14 +21,6 @@ function AdminPanel() {
   useEffect(() => {
     loadDocuments();
   }, []);
-
-  useEffect(() => {
-    if (location.state?.highlightDocumentId) {
-      setHighlightId(location.state.highlightDocumentId);
-      const timer = setTimeout(() => setHighlightId(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [location]);
 
   const loadDocuments = async () => {
     try {
@@ -72,6 +64,24 @@ function AdminPanel() {
       default: return { backgroundColor: '#e5e7eb', color: '#374151' };
     }
   };
+
+  const handleDelete = async (id) => {
+      const confirmed = window.confirm('Бұл құжатты жойғыңыз келе ме? Барлық пікірлер де жойылады.');
+      if (!confirmed) return;
+
+      try {
+        const commentsRes = await getCommentsByDocument(id);
+        const comments = commentsRes.data.data || [];
+        for (const comment of comments) {
+          await deleteComment(comment.id);
+        }
+        await deleteDocument(id);
+        await loadDocuments();
+      } catch (err) {
+        console.error('Жою қатесі:', err);
+        alert('Құжатты жою қатесі: ' + (err.response?.data?.message || err.message));
+      }
+    };
 
   if (loading) {
     return (
@@ -175,6 +185,9 @@ function AdminPanel() {
                   <Link to={`/document/${doc.id}`} style={styles.viewBtn}>
                     <FiEye size={16} /> Көру
                   </Link>
+                  <button onClick={() => handleDelete(doc.id)} style={styles.deleteBtn}>
+                                      <FiTrash2 size={16} /> Жою
+                                    </button>
                 </div>
               </div>
             ))}
@@ -388,6 +401,18 @@ const styles = {
     fontWeight: '600',
     textDecoration: 'none'
   },
+  deleteBtn: {
+      background: '#ef4444',
+      color: '#fff',
+      border: 'none',
+      padding: '12px 24px',
+      borderRadius: '12px',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      fontWeight: '600'
+    },
   emptyState: {
     textAlign: 'center',
     padding: '70px 20px'
