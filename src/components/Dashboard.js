@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getMyDocuments, getAllDocuments, deleteDocument, searchDocuments, getCommentsByDocument, deleteComment } from '../services/api';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { getMyDocuments, getAllDocuments, deleteDocument, searchDocuments, getCommentsByDocument, deleteComment, updateDocumentStatus } from '../services/api';
 import { FiFileText, FiTrash2, FiEye, FiSearch, FiRefreshCw, FiCalendar } from 'react-icons/fi';
 
 function Dashboard() {
+  const navigate = useNavigate();
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -77,7 +78,6 @@ function Dashboard() {
       try {
         const commentsRes = await getCommentsByDocument(id);
         const comments = commentsRes.data.data || [];
-
         for (const comment of comments) {
                   await deleteComment(comment.id);
         }
@@ -85,6 +85,18 @@ function Dashboard() {
         await loadDocuments();
       } catch (err) {
         setError('Жою қатесі: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleReview = async (id) => {
+    try {
+      setLoading(true);
+      await updateDocumentStatus(id, 'IN_REVIEW', null);
+      await loadDocuments();
+    } catch (err) {
+      setError('Статусты өзгерту қатесі: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -128,6 +140,7 @@ function Dashboard() {
           onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
         />
         </div>
+        {userRole !== 'ADMIN' && (
         <select
           value={searchStatus}
           onChange={(e) => setSearchStatus(e.target.value)}
@@ -139,13 +152,12 @@ function Dashboard() {
           <option value="APPROVED">Бекітілген</option>
           <option value="REJECTED">Қабылданбады</option>
         </select>
+        )}
         <button onClick={handleSearch} style={styles.searchBtn}>
-          <FiSearch size={16} />
-          Іздеу
+          <FiSearch size={16} /> Іздеу
         </button>
         <button onClick={handleReset} style={styles.resetBtn}>
-          <FiRefreshCw size={16} />
-          Тазалау
+          <FiRefreshCw size={16} /> Тазалау
         </button>
       </div>
 
@@ -209,9 +221,15 @@ function Dashboard() {
                       </div>
                     </td>
                     <td style={styles.actionsTd}>
+                      {userRole === 'ADMIN' ? (
+                        <button onClick={() => handleReview(doc.id)} style={styles.reviewBtn}>
+                          <FiEye size={15} /> Қарауда
+                        </button>
+                      ) : (
                       <Link to={`/document/${doc.id}`} style={styles.viewBtn}>
                         <FiEye size={15} /> Көру
                       </Link>
+                      )}
                       <button onClick={() => handleDelete(doc.id)} style={styles.deleteBtn}>
                         <FiTrash2 size={15} /> Жою
                       </button>
@@ -372,7 +390,19 @@ const styles = {
     fontSize: '13px',
     fontWeight: '600',
   },
-
+  reviewBtn: {
+    backgroundColor: '#f59e0b',
+    color: '#fff',
+    padding: '10px 14px',
+    borderRadius: '10px',
+    border: 'none',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    fontSize: '13px',
+    fontWeight: '600',
+  },
   deleteBtn: {
     backgroundColor: '#ef4444',
     color: '#fff',

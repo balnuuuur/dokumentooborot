@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getDocumentById, addComment, getCommentsByDocument, deleteComment, updateComment } from '../services/api';
-import { FiDownload, FiMessageSquare, FiCalendar, FiClock, FiArrowLeft, FiFileText, FiTrash2, FiEdit2, FiCheck, FiX } from 'react-icons/fi';
+import { getDocumentById, addComment, getCommentsByDocument, deleteComment, updateComment, updateDocumentStatus } from '../services/api';
+import { FiDownload, FiMessageSquare, FiCalendar, FiClock, FiArrowLeft, FiFileText, FiTrash2, FiEdit2, FiCheck, FiX, FiShield } from 'react-icons/fi';
 
 function DocumentDetail() {
   const { id } = useParams();
@@ -15,6 +15,7 @@ function DocumentDetail() {
   const [error, setError] = useState('');
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editContent, setEditContent] = useState('');
+  const [showStatusMenu, setShowStatusMenu] = useState(false);
 
   const currentUser = localStorage.getItem('username');
   const userRole = localStorage.getItem('userRole');
@@ -154,6 +155,18 @@ function DocumentDetail() {
         setEditContent('');
       };
 
+    const handleStatusChange = async (newStatus, rejectionReason = null) => {
+     try {
+        await updateDocumentStatus(id, newStatus, rejectionReason);
+        loadDocument();
+        setShowStatusMenu(false);
+        alert(`Құжат статусы өзгертілді: ${getStatusText(newStatus)}`);
+        } catch (err) {
+        console.error(err);
+        alert('Статус өзгерту қатесі');
+      }
+   };
+
   const handleDownload = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -229,6 +242,13 @@ function DocumentDetail() {
     }
   };
 
+  const allStatuses = [
+      { value: 'DRAFT', label: 'Жоба', color: '#374151', bg: '#e5e7eb' },
+      { value: 'IN_REVIEW', label: 'Қарауда', color: '#92400e', bg: '#fef3c7' },
+      { value: 'APPROVED', label: 'Бекітілген', color: '#166534', bg: '#dcfce7' },
+      { value: 'REJECTED', label: 'Қабылданбады', color: '#991b1b', bg: '#fee2e2' }
+    ];
+
   if (loading) {
     return (
       <div style={styles.loadingContainer}>
@@ -251,6 +271,9 @@ function DocumentDetail() {
       </div>
     );
   }
+
+  const currentStatus =
+    allStatuses.find((s) => s.value === doc?.status) || allStatuses[0];
 
   return (
     <div style={styles.page}>
@@ -278,21 +301,56 @@ function DocumentDetail() {
                 {doc?.description || 'Сипаттама қосылмаған'}
               </p>
 
+          {userRole === 'ADMIN' ? (
+            <div style={styles.statusDropdown}>
+            <button
+             onClick={() => setShowStatusMenu(!showStatusMenu)}
+             style={{...styles.statusButton, backgroundColor: currentStatus.bg, color: currentStatus.color,}}>
+                <span style={styles.statusIcon}>
+                   {currentStatus.icon}
+                </span>
+                    {currentStatus.label}
+                    <span style={styles.dropdownArrow}>
+                      ~
+                    </span>
+                  </button>
+
+           {showStatusMenu && (
+               <div style={styles.statusDropdownMenu}>
+               {allStatuses.map((status) => (
+                <button key={status.value} onClick={() => {
+                    if (status.value === 'REJECTED') {
+                        const reason = prompt('Қабылданбау себебін жазыңыз:');
+                    if (reason) {handleStatusChange(status.value,reason);}
+                    } else {handleStatusChange(status.value);}
+                 }
+               }
+               style={{...styles.statusDropdownItem,backgroundColor: status.bg,color: status.color,}}>
+                  <span style={styles.statusIcon}>
+                       {status.icon}
+                   </span>
+                     {status.label}
+                  </button>
+                 ))}
+               </div>
+              )}
+           </div>
+            ) : (
+              <span style={{...styles.statusBadge,backgroundColor: currentStatus.bg,color: currentStatus.color,}}>
+                  <span style={styles.statusIcon}>
+                    {currentStatus.icon}
+                  </span>
+
+                  {currentStatus.label}
+                </span>
+              )}
+
               <div style={styles.infoRow}>
                 <span style={styles.infoLabel}>Санат</span>
                 <span style={styles.infoValue}>{doc?.category || 'Жоқ'}</span>
               </div>
 
               <div style={styles.topInfo}>
-                <span
-                  style={{
-                    ...styles.statusBadge,
-                    ...getStatusStyle(doc?.status),
-                  }}
-                >
-                  {getStatusText(doc?.status)}
-                </span>
-
                 <div style={styles.infoItem}>
                   <FiCalendar size={14} />
                   {new Date(doc?.uploadedAt).toLocaleDateString()}
@@ -645,6 +703,77 @@ const styles = {
     color: '#64748b',
     fontSize: '14px',
   },
+
+statusDropdown: {
+  position: 'relative',
+  width: 'fit-content',
+  marginBottom: '14px',
+},
+
+statusButton: {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '8px',
+  padding: '10px 16px',
+  borderRadius: '999px',
+  fontSize: '13px',
+  fontWeight: '600',
+  border: 'none',
+  cursor: 'pointer',
+  transition: 'all 0.2s ease',
+},
+
+dropdownArrow: {
+  fontSize: '10px',
+  marginLeft: '2px',
+  display: 'flex',
+  alignItems: 'center',
+},
+
+statusDropdownMenu: {
+  position: 'absolute',
+  top: '110%',
+  left: 0,
+  backgroundColor: '#fff',
+  borderRadius: '16px',
+  boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+  overflow: 'hidden',
+  zIndex: 100,
+  minWidth: '220px',
+  border: '1px solid #e5e7eb',
+  animation: 'fadeIn 0.2s ease',
+},
+
+statusDropdownItem: {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '10px',
+  width: '100%',
+  padding: '12px 16px',
+  border: 'none',
+  cursor: 'pointer',
+  fontSize: '14px',
+  fontWeight: '600',
+  transition: 'all 0.2s ease',
+  textAlign: 'left',
+},
+
+statusIcon: {
+  fontSize: '16px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+
+statusBadge: {
+  padding: '10px 16px',
+  borderRadius: '999px',
+  fontSize: '13px',
+  fontWeight: '600',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '8px',
+},
 
   downloadBtn: {
     backgroundColor: '#667eea',
