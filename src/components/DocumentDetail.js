@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getDocumentById, addComment, getCommentsByDocument, deleteComment, updateComment, updateDocumentStatus } from '../services/api';
-import { FiDownload, FiMessageSquare, FiCalendar, FiClock, FiArrowLeft, FiFileText, FiTrash2, FiEdit2, FiCheck, FiX, FiShield } from 'react-icons/fi';
+import { getDocumentById, addComment, getCommentsByDocument, deleteComment, updateComment, updateDocumentStatus, deleteDocument, uploadDocument } from '../services/api';
+import { FiDownload, FiMessageSquare, FiCalendar, FiClock, FiArrowLeft, FiFileText, FiTrash2, FiEdit2, FiCheck, FiX, FiShield, FiUpload } from 'react-icons/fi';
 
 function DocumentDetail() {
   const { id } = useParams();
@@ -16,9 +16,14 @@ function DocumentDetail() {
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editContent, setEditContent] = useState('');
   const [showStatusMenu, setShowStatusMenu] = useState(false);
+  const [showReplaceMenu, setShowReplaceMenu] = useState(false);
+  const [replacementFile, setReplacementFile] = useState(null);
+  const [replacing, setReplacing] = useState(false);
 
   const currentUser = localStorage.getItem('username');
   const userRole = localStorage.getItem('userRole');
+
+  const canReplace = doc?.owner?.username === currentUser;
 
   useEffect(() => {
     loadDocument();
@@ -166,6 +171,32 @@ function DocumentDetail() {
         alert('Статус өзгерту қатесі');
       }
    };
+
+   const handleReplaceDocument = async () => {
+       if (!replacementFile) {
+         alert('Файл таңдаңыз');
+         return;
+       }
+
+       if (window.confirm('Бұл құжатты басқа файлмен ауыстырғыңыз келе ме? Ескі файл жойылады.')) {
+         setReplacing(true);
+         try {
+           await deleteDocument(id);
+
+           await uploadDocument(replacementFile, doc?.description, doc?.category);
+
+           alert('Құжат сәтті ауыстырылды!');
+           navigate('/documents');
+         } catch (err) {
+           console.error(err);
+           alert('Құжатты ауыстыру қатесі: ' + (err.response?.data?.message || err.message));
+         } finally {
+           setReplacing(false);
+           setShowReplaceMenu(false);
+           setReplacementFile(null);
+         }
+       }
+     };
 
   const handleDownload = async () => {
     try {
@@ -359,14 +390,35 @@ function DocumentDetail() {
             </div>
           </div>
 
-          <button
-            onClick={handleDownload}
-            style={styles.downloadBtn}
-          >
-            <FiDownload size={18} />
-            Жүктеу
-          </button>
+          <div style={styles.actionButtonsRow}>
+                      <button onClick={handleDownload} style={styles.downloadBtn}>
+                        <FiDownload size={18} /> Жүктеу
+                      </button>
 
+          {canReplace && (<div style={styles.replaceDropdown}>
+          <button onClick={() => setShowReplaceMenu(!showReplaceMenu)}
+                style={styles.replaceBtn}
+                disabled={replacing}>
+           <FiUpload size={18} /> {replacing ? 'Ауыстырылуда...' : 'Құжатты ауыстыру'}
+           </button>
+          {showReplaceMenu && (<div style={styles.replaceMenu}>
+          <input type="file" id="replaceFile" accept=".pdf,.doc,.docx,.txt"
+            onChange={(e) => setReplacementFile(e.target.files[0])}
+            style={styles.fileInput}/>
+          <label htmlFor="replaceFile" style={styles.fileInputLabel}>Файл таңдау</label>
+             {replacementFile && (
+             <>
+             <p style={styles.selectedFileInfo}>Таңдалған: {replacementFile.name}</p>
+          <button onClick={handleReplaceDocument} style={styles.confirmReplaceBtn}>
+              Ауыстыруды растау
+          </button>
+         </>
+        )}
+    </div>
+   )}
+</div>
+)}
+</div>
           <div style={styles.previewCard}>
             <div style={styles.sectionHeader}>
               <h3 style={styles.sectionTitle}>
@@ -774,6 +826,79 @@ statusBadge: {
   alignItems: 'center',
   gap: '8px',
 },
+
+  actionButtonsRow: {
+    display: 'flex',
+    gap: '16px',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
+
+  replaceDropdown: {
+      position: 'relative',
+  },
+
+  replaceBtn: {
+    backgroundColor: '#f59e0b',
+    color: 'white',
+    border: 'none',
+    padding: '12px 22px',
+    borderRadius: '14px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    fontWeight: '600',
+  },
+
+  replaceMenu: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    marginTop: '8px',
+    backgroundColor: '#fff',
+    borderRadius: '16px',
+    boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+    padding: '16px',
+    minWidth: '250px',
+    zIndex: 100,
+    border: '1px solid #e2e8f0',
+  },
+
+  fileInput: {
+    display: 'none',
+  },
+
+  fileInputLabel: {
+    display: 'block',
+    padding: '10px 16px',
+    backgroundColor: '#eef2ff',
+    color: '#4f46e5',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    textAlign: 'center',
+    fontWeight: '500',
+    marginBottom: '12px',
+  },
+
+  selectedFileInfo: {
+    fontSize: '12px',
+    color: '#10b981',
+    marginBottom: '12px',
+    wordBreak: 'break-all',
+    textAlign: 'center',
+  },
+
+  confirmReplaceBtn: {
+    width: '100%',
+    padding: '10px',
+    backgroundColor: '#ef4444',
+    color: 'white',
+    border: 'none',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    fontWeight: '600',
+  },
 
   downloadBtn: {
     backgroundColor: '#667eea',
