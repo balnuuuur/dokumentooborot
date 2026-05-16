@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getDocumentById, addComment, getCommentsByDocument, deleteComment, updateComment, updateDocumentStatus, deleteDocument, uploadDocument } from '../services/api';
-import { FiDownload, FiMessageSquare, FiCalendar, FiClock, FiArrowLeft, FiFileText, FiTrash2, FiEdit2, FiCheck, FiX, FiShield, FiUpload } from 'react-icons/fi';
+import { getDocumentById, addComment, getCommentsByDocument, deleteComment, updateComment, updateDocumentStatus, deleteDocument, uploadDocument, getAuditLogsByDocument } from '../services/api';
+import { FiDownload, FiMessageSquare, FiCalendar, FiClock, FiArrowLeft, FiFileText, FiTrash2, FiEdit2, FiCheck, FiX, FiShield, FiUpload, } from 'react-icons/fi';
 
 function DocumentDetail() {
   const { id } = useParams();
@@ -19,15 +19,18 @@ function DocumentDetail() {
   const [showReplaceMenu, setShowReplaceMenu] = useState(false);
   const [replacementFile, setReplacementFile] = useState(null);
   const [replacing, setReplacing] = useState(false);
+  const [auditLogs, setAuditLogs] = useState([]);
 
   const currentUser = localStorage.getItem('username');
   const userRole = localStorage.getItem('userRole');
 
   const canReplace = doc?.owner?.username === currentUser;
+  const showAuditLogs = userRole === 'ADMIN';
 
   useEffect(() => {
     loadDocument();
     loadComments();
+    loadAuditLogs();
   }, [id]);
 
   const loadDocument = async () => {
@@ -93,6 +96,16 @@ function DocumentDetail() {
     }
   };
 
+  const loadAuditLogs = async () => {
+      try {
+        const res = await getAuditLogsByDocument(id);
+        console.log('Audit logs:', res.data);
+        setAuditLogs(res.data.data || []);
+      } catch (err) {
+        console.error('Audit logs жүктеу қатесі:', err);
+      }
+    };
+
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
 
@@ -100,6 +113,7 @@ function DocumentDetail() {
       await addComment(id, newComment);
       setNewComment('');
       loadComments();
+      loadAuditLogs();
     } catch (err) {
       console.error(err);
     }
@@ -115,6 +129,7 @@ function DocumentDetail() {
         try {
           await deleteComment(commentId);
           loadComments();
+          loadAuditLogs();
         } catch (err) {
           console.error(err);
           alert('Пікірді жою қатесі');
@@ -149,6 +164,7 @@ function DocumentDetail() {
           setEditingCommentId(null);
           setEditContent('');
           loadComments();
+          loadAuditLogs();
         } catch (err) {
           console.error(err);
           alert('Пікірді өңдеу қатесі');
@@ -164,6 +180,7 @@ function DocumentDetail() {
      try {
         await updateDocumentStatus(id, newStatus, rejectionReason);
         loadDocument();
+        loadAuditLogs();
         setShowStatusMenu(false);
         alert(`Құжат статусы өзгертілді: ${getStatusText(newStatus)}`);
         } catch (err) {
@@ -271,6 +288,21 @@ function DocumentDetail() {
       default:
         return 'Жоба';
     }
+  };
+
+  const getAuditActionText = (action, actionType) => {
+    if (actionType === 'UPLOAD') return 'Құжат жүктелді';
+    if (actionType === 'COMMENT') return 'Пікір қалдырылды';
+    if (actionType === 'UPDATE_STATUS') return 'Статус жаңарды';
+    if (actionType === 'DELETE') return 'Құжат жойылды';
+    if (actionType === 'UPDATE_COMMENT') return 'Пікір жаңартылды';
+
+    if (action?.includes('upload')) return 'Құжат жүктелді';
+    if (action?.includes('comment')) return 'Пікір қалдырылды';
+    if (action?.includes('status')) return 'Статус жаңарды';
+    if (action?.includes('delete')) return 'Құжат жойылды';
+
+    return action || 'Әрекет';
   };
 
   const allStatuses = [
@@ -596,6 +628,38 @@ function DocumentDetail() {
         </div>
 
         <div style={styles.sidebar}>
+        {showAuditLogs && (
+          <div style={styles.auditCard}>
+            <div style={styles.auditHeader}>
+              <h3 style={styles.auditTitle}>Әрекеттер тарихы</h3>
+            </div>
+            <div style={styles.auditList}>
+              {auditLogs.length === 0 ? (
+                <p style={styles.auditEmpty}>Әрекеттер жоқ</p>
+              ) : (
+                auditLogs.map((log, index) => (
+                 <div key={log.id || index} style={styles.auditItem}>
+                 <div style={styles.auditContent}>
+                   <p style={styles.auditAction}>
+                     {log.actionType === 'UPLOAD' && 'Құжат жүктелді'}
+                     {log.actionType === 'COMMENT' && 'Пікір қалдырылды'}
+                     {log.actionType === 'UPDATE_STATUS' && 'Статус жаңарды'}
+                     {log.actionType === 'DELETE' && 'Құжат жойылды'}
+                     {!log.actionType && (log.action?.includes('жүктелді') ? 'Құжат жүктелді' : log.action)}
+                   </p>
+                 <div style={styles.auditMeta}>
+                     <span style={styles.auditUser}>{log.username}</span>
+                     <span style={styles.auditTime}>
+                        {new Date(log.timestamp).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+               ))
+             )}
+          </div>
+         </div>
+        )}
           <div style={styles.infoCard}>
             <h3 style={styles.infoTitle}>
               Құжат ақпараты
@@ -1186,6 +1250,61 @@ statusBadge: {
     padding: '10px 20px',
     borderRadius: '10px',
     cursor: 'pointer',
+  },
+auditCard: {
+    backgroundColor: 'white',
+    borderRadius: '24px',
+    padding: '20px',
+    marginBottom: '24px',
+    boxShadow: '0 4px 20px rgba(15,23,42,0.05)',
+  },
+  auditHeader: {
+    marginBottom: '16px',
+    paddingBottom: '12px',
+    borderBottom: '1px solid #e2e8f0',
+  },
+  auditTitle: {
+    fontSize: '16px',
+    fontWeight: '600',
+    margin: 0,
+    color: '#1f2937',
+  },
+  auditList: {
+    maxHeight: '400px',
+    overflowY: 'auto',
+  },
+  auditEmpty: {
+    textAlign: 'center',
+    color: '#94a3b8',
+    fontSize: '13px',
+    padding: '20px',
+  },
+  auditItem: {
+    padding: '12px 0',
+    borderBottom: '1px solid #f1f5f9',
+  },
+  auditAction: {
+    fontSize: '13px',
+    fontWeight: '500',
+    color: '#1f2937',
+    margin: 0,
+    marginBottom: '4px',
+  },
+  auditMeta: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: '8px',
+  },
+  auditUser: {
+    fontSize: '11px',
+    color: '#6366f1',
+    fontWeight: '500',
+  },
+  auditTime: {
+    fontSize: '10px',
+    color: '#94a3b8',
   },
 };
 

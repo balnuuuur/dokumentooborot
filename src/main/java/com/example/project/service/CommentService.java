@@ -33,9 +33,9 @@ public class CommentService {
 
         Comment saved = commentRepository.save(comment);
 
-        auditService.log(username, "Пікір қалдырылды: " + document.getFileName(), documentId);
-
         String commentPreview = content.length() > 50 ? content.substring(0, 50) + "..." : content;
+
+        auditService.log(username, "Пікір қалдырылды: " + commentPreview, documentId);
 
         if (documentOwner != null && !documentOwner.getUsername().equals(username)) {
             notificationService.createNotification(
@@ -69,11 +69,14 @@ public class CommentService {
         if (!comment.getAuthor().getUsername().equals(username)) {
             throw new RuntimeException("Бұл пікірді жаңартуға рұқсат жоқ");
         }
-
+        String oldContent = comment.getContent();
         comment.setContent(newContent);
         Comment saved = commentRepository.save(comment);
 
-        auditService.log(username, "Пікір жаңартылды. ID: " + commentId, comment.getDocument().getId());
+        String oldPreview = oldContent.length() > 30 ? oldContent.substring(0, 30) + "..." : oldContent;
+        String newPreview = newContent.length() > 30 ? newContent.substring(0, 30) + "..." : newContent;
+
+        auditService.log(username, "Пікір жаңартылды: \"" + oldPreview + "\" - \"" + newPreview + "\"", comment.getDocument().getId());
 
         return saved;
     }
