@@ -1,5 +1,6 @@
 package com.example.project.service;
 
+import com.example.project.DTO.ChangePasswordRequest;
 import com.example.project.DTO.LoginRequest;
 import com.example.project.DTO.RegisterRequest;
 import com.example.project.entity.User;
@@ -59,5 +60,16 @@ public class UserService {
 
     public User findByRoleAdmin() {
         return userRepository.findByRole(Role.ADMIN);
+    }
+
+    public void changePassword(String username, ChangePasswordRequest request) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Пайдаланушы табылмады"));
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new RuntimeException("Ағымдағы құпия сөз қате");
+        }
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
     }
 }
