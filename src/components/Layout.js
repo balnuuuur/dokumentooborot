@@ -26,6 +26,15 @@ function Layout() {
       return () => clearInterval(interval);
     }, []);
 
+    useEffect(() => {
+      const handleStorageChange = () => {
+          loadUnreadCount();
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+      }, []);
+
   const handleLogout = () => {
       localStorage.removeItem('token');
       localStorage.removeItem('userRole');

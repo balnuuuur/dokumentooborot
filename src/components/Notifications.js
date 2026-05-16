@@ -25,10 +25,20 @@ function Notifications() {
     }
   };
 
+   const updateUnreadCount = () => {
+      const newUnreadCount = notifications.filter(n => !n.read).length;
+      setUnreadCount(newUnreadCount);
+
+      localStorage.setItem('unreadCountUpdated', Date.now().toString());
+        window.dispatchEvent(new Event('storage'));
+      };
+
   const handleMarkAsRead = async (id) => {
     try {
       await markAsRead(id);
-      loadNotifications();
+      const updated = notifications.map(n => n.id === id ? { ...n, read: true } : n);
+          setNotifications(updated);
+          updateUnreadCount();
     } catch (err) {
       console.error(err);
     }
@@ -37,7 +47,10 @@ function Notifications() {
   const handleMarkAll = async () => {
     try {
       await markAllAsRead();
-      loadNotifications();
+      const updatedNotifications = notifications.map(n => ({ ...n, read: true }));
+          setNotifications(updatedNotifications);
+          setUnreadCount(0);
+          updateUnreadCount();
     } catch (err) {
       console.error(err);
     }
