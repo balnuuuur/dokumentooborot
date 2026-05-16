@@ -131,4 +131,8 @@ export const getAuditLogsByDocument = (documentId) => {
   return api.get(`/audit/logs/document/${documentId}`);
 };
 
+export const changePassword = (data) => {
+  return api.post('/user/change-password', data);
+};
+
 export default api;
