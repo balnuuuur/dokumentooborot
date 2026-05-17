@@ -8,13 +8,29 @@ function Register() {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [usernameError, setUsernameError] = useState('');
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+      const { name, value } = e.target;
+
+      if (name === 'username') {
+        const valueWithoutSpaces = value.replace(/\s/g, '');
+
+        const latinRegex = /^[a-zA-Z0-9_]*$/;
+
+        if (!latinRegex.test(valueWithoutSpaces)) {
+          setUsernameError('Тек латын әліпбиі');
+        } else {
+          setUsernameError('');
+        }
+      }
+
+      setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (usernameError) return;
     setLoading(true);
     setError('');
     setSuccess('');
@@ -49,16 +65,24 @@ function Register() {
 
           <form onSubmit={handleSubmit}>
             <div style={styles.inputGroup}>
-              <label style={styles.label}>Пайдаланушы аты</label>
+              <label style={styles.label}>Пайдаланушы аты-жөні</label>
               <input
                 type="text"
                 name="username"
-                style={styles.input}
+                style={{
+                  ...styles.input,
+                  borderColor: usernameError ? 'red' : '#e0e0e0',
+                }}
                 placeholder="Енгізу..."
                 value={formData.username}
                 onChange={handleChange}
                 required
               />
+              {usernameError && (
+                <small style={styles.errorText}>
+                  {usernameError}
+                </small>
+              )}
             </div>
 
             <div style={styles.inputGroup}>
@@ -202,6 +226,12 @@ const styles = {
     marginBottom: '20px',
     fontSize: '14px',
     textAlign: 'center',
+  },
+  hint: {
+    display: 'block',
+    marginTop: '5px',
+    fontSize: '12px',
+    color: '#999'
   },
 };
 

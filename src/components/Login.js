@@ -46,7 +46,7 @@ function Login() {
 
           <form onSubmit={handleSubmit}>
             <div style={styles.inputGroup}>
-              <label style={styles.label}>Пайдаланушы аты</label>
+              <label style={styles.label}>Пайдаланушы аты-жөні</label>
               <input
                 type="text"
                 style={styles.input}
