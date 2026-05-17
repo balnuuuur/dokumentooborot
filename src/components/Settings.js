@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiLock, FiSave, FiArrowLeft, FiBell, FiBellOff, FiChevronDown, FiShield } from 'react-icons/fi';
-import { changePassword } from '../services/api';
+import { FiLock, FiSave, FiArrowLeft, FiBell, FiChevronDown, FiShield, FiTrash2, FiAlertCircle } from 'react-icons/fi';
+import { changePassword, deleteAccount } from '../services/api';
 
 function Settings() {
   const navigate = useNavigate();
@@ -14,13 +14,15 @@ function Settings() {
     confirm: ''
   });
   const [loading, setLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
   const [securityOpen, setSecurityOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
 
   const handleNotificationsChange = (checked) => {
     setNotificationsEnabled(checked);
     localStorage.setItem('notificationsEnabled', checked);
-
     window.dispatchEvent(new CustomEvent('notificationsChanged', { detail: checked }));
   };
 
@@ -63,6 +65,28 @@ function Settings() {
       showMessage('Қате: ' + (err.response?.data?.message || 'Ағымдағы құпия сөз қате'), 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (confirmText !== 'Жою') {
+      showMessage('Растау сөзі дұрыс емес', 'error');
+      return;
+    }
+
+    setDeleteLoading(true);
+    try {
+      const response = await deleteAccount();
+      if (response.data.success) {
+        localStorage.clear();
+        window.location.href = '/login';
+      } else {
+        showMessage(response.data.message || 'Қате орын алды', 'error');
+      }
+    } catch (err) {
+      showMessage('Қате: ' + (err.response?.data?.message || 'Аккаунтты жою мүмкін емес'), 'error');
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -194,6 +218,71 @@ function Settings() {
             <FiSave size={16} /> {loading ? 'Өзгерту...' : 'Құпия сөзді өзгерту'}
           </button>
         </form>
+        )}
+      </div>
+
+      <div style={styles.card}>
+        <div
+          style={styles.sectionHeader}
+          onClick={() => setDeleteOpen(!deleteOpen)}
+        >
+          <div style={styles.sectionHeaderLeft}>
+            <div style={{...styles.sectionIcon, background: 'linear-gradient(135deg, #ef4444, #dc2626)'}}>
+              <FiTrash2 size={18} />
+            </div>
+            <div>
+              <h2 style={styles.sectionTitle}>Аккаунтты жою</h2>
+              <p style={styles.sectionSubtitle}>Барлық деректеріңізді біржола жою</p>
+            </div>
+          </div>
+          <FiChevronDown
+            size={20}
+            style={{
+              transform: deleteOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: '0.3s'
+            }}
+          />
+        </div>
+
+        {deleteOpen && (
+          <div style={styles.deleteWarning}>
+            <div style={styles.deleteWarningIcon}>
+              <FiAlertCircle size={20} color="#dc2626" />
+            </div>
+            <div>
+              <p style={styles.deleteWarningText}>
+                <strong>ЕСКЕРТУ!</strong> Бұл әрекетті қайтаруға болмайды.
+                Барлық құжаттарыңыз, пікірлеріңіз және деректеріңіз біржола жойылады.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {deleteOpen && (
+          <>
+            <div style={styles.inputGroup}>
+              <label style={styles.label}>Растау үшін төмендегі сөзді жазыңыз:</label>
+              <div style={styles.inputWrapper}>
+                <FiAlertCircle size={18} color="#9ca3af" />
+                <input
+                  type="text"
+                  value={confirmText}
+                  onChange={(e) => setConfirmText(e.target.value)}
+                  placeholder="Жою"
+                  style={styles.inputWithIcon}
+                />
+              </div>
+              <p style={styles.hint}>«Жою» деп жазыңыз</p>
+            </div>
+
+            <button
+              onClick={handleDeleteAccount}
+              style={styles.deleteBtn}
+              disabled={deleteLoading || confirmText !== 'Жою'}
+            >
+              <FiTrash2 size={16} /> {deleteLoading ? 'Жойылуда...' : 'Аккаунтты біржола жою'}
+            </button>
+          </>
         )}
       </div>
     </div>
@@ -343,6 +432,42 @@ const styles = {
     marginTop: '16px',
     transition: '0.3s ease',
     boxShadow: '0 10px 25px rgba(99,102,241,0.3)'
+  },
+  deleteBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '14px 20px',
+    background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '16px',
+    fontSize: '15px',
+    fontWeight: '700',
+    cursor: 'pointer',
+    width: '100%',
+    justifyContent: 'center',
+    marginTop: '16px',
+    transition: '0.3s ease',
+    boxShadow: '0 10px 25px rgba(239,68,68,0.3)'
+  },
+  deleteWarning: {
+    display: 'flex',
+    gap: '12px',
+    padding: '16px',
+    backgroundColor: '#fef2f2',
+    borderRadius: '16px',
+    marginTop: '20px',
+    marginBottom: '8px'
+  },
+  deleteWarningIcon: {
+    flexShrink: 0
+  },
+  deleteWarningText: {
+    fontSize: '13px',
+    color: '#991b1b',
+    margin: 0,
+    lineHeight: '1.5'
   },
   message: {
     padding: '14px 18px',
