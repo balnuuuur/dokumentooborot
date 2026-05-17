@@ -135,4 +135,8 @@ export const changePassword = (data) => {
   return api.post('/user/change-password', data);
 };
 
+export const deleteAccount = () => {
+  return api.delete('/user/delete-account');
+};
+
 export default api;
