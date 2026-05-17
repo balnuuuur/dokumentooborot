@@ -56,12 +56,22 @@ function Notifications() {
     }
   };
 
+   const getStartOfToday = () => {
+      const today = new Date();
+      return new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    };
+
+    const getStartOfWeek = () => {
+      const today = new Date();
+      const day = today.getDay();
+      const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+      return new Date(today.getFullYear(), today.getMonth(), diff);
+    };
+
   const filteredNotifications = notifications.filter((n) => {
       const notificationDate = new Date(n.createdAt);
-      const today = new Date();
-      const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const startOfWeek = new Date(today);
-      startOfWeek.setDate(today.getDate() - today.getDay());
+      const startOfToday = getStartOfToday();
+      const startOfWeek = getStartOfWeek();
 
       if (filter === 'today') {
         return notificationDate >= startOfToday;
@@ -72,10 +82,8 @@ function Notifications() {
     return true;
   });
 
-  const today = new Date();
-    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-
-  const todayCount = notifications.filter((n) => new Date(n.createdAt) >= startOfToday).length;
+  const todayCount = notifications.filter((n) => new Date(n.createdAt) >= getStartOfToday()).length;
+  const weekCount = notifications.filter((n) => new Date(n.createdAt) >= getStartOfWeek()).length;
   const allCount = notifications.length;
   const unreadCountValue = notifications.filter((n) => !n.read).length;
 
