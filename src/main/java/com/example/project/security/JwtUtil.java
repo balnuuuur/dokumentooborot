@@ -6,9 +6,6 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
@@ -32,8 +29,7 @@ public class JwtUtil {
     public String generateToken(String username, String role) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", role);
-        String encodedUsername = Base64.getEncoder().encodeToString(username.getBytes(StandardCharsets.UTF_8));
-        return createToken(claims, encodedUsername);
+        return createToken(claims, username);
     }
 
     private String createToken(Map<String, Object> claims, String subject) {
@@ -47,9 +43,7 @@ public class JwtUtil {
     }
 
     public String extractUsername(String token) {
-        String encodedUsername = extractClaim(token, Claims::getSubject);
-        byte[] decodedBytes = Base64.getDecoder().decode(encodedUsername);
-        return new String(decodedBytes, StandardCharsets.UTF_8);
+        return extractClaim(token, Claims::getSubject);
     }
 
     public Date extractExpiration(String token) {
