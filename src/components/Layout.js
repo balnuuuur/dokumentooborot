@@ -10,8 +10,16 @@ function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
+      return localStorage.getItem('notificationsEnabled') !== 'false';
+    });
 
   const loadUnreadCount = async () => {
+      if (!notificationsEnabled) {
+        setUnreadCount(0);
+        return;
+      }
+
       try {
         const res = await getUnreadCount();
         setUnreadCount(res.data.data || 0);
@@ -21,10 +29,25 @@ function Layout() {
     };
 
     useEffect(() => {
+      const handleNotificationsChange = (event) => {
+        const enabled = event.detail;
+        setNotificationsEnabled(enabled);
+        if (!enabled) {
+          setUnreadCount(0);
+        } else {
+          loadUnreadCount();
+        }
+      };
+
+      window.addEventListener('notificationsChanged', handleNotificationsChange);
+      return () => window.removeEventListener('notificationsChanged', handleNotificationsChange);
+    }, []);
+
+    useEffect(() => {
       loadUnreadCount();
       const interval = setInterval(loadUnreadCount, 30000);
       return () => clearInterval(interval);
-    }, []);
+      }, [notificationsEnabled]);
 
     useEffect(() => {
       const handleStorageChange = () => {

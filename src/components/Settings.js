@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiLock, FiSave, FiArrowLeft } from 'react-icons/fi';
+import { FiLock, FiSave, FiArrowLeft, FiBell, FiBellOff, FiChevronDown, FiShield } from 'react-icons/fi';
 import { changePassword } from '../services/api';
 
 function Settings() {
   const navigate = useNavigate();
+  const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
+    return localStorage.getItem('notificationsEnabled') !== 'false';
+  });
   const [passwords, setPasswords] = useState({
     current: '',
     new: '',
@@ -12,6 +15,18 @@ function Settings() {
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
+  const [securityOpen, setSecurityOpen] = useState(false);
+
+  const handleNotificationsChange = (checked) => {
+    setNotificationsEnabled(checked);
+    localStorage.setItem('notificationsEnabled', checked);
+
+    window.dispatchEvent(new CustomEvent('notificationsChanged', { detail: checked }));
+  };
+
+  useEffect(() => {
+    localStorage.setItem('notificationsEnabled', notificationsEnabled);
+  }, [notificationsEnabled]);
 
   const showMessage = (text, type) => {
     setMessage({ text, type });
@@ -58,8 +73,8 @@ function Settings() {
       </button>
 
       <div style={styles.header}>
-        <h1 style={styles.title}>Құпия сөзді өзгерту</h1>
-        <p style={styles.subtitle}>Қауіпсіздік үшін құпия сөзіңізді жаңартыңыз</p>
+        <h1 style={styles.title}>Баптаулар</h1>
+        <p style={styles.subtitle}>Аккаунт параметрлерін басқарыңыз</p>
       </div>
 
       {message.text && (
@@ -69,6 +84,65 @@ function Settings() {
       )}
 
       <div style={styles.card}>
+        <div style={styles.sectionHeader}>
+          <div style={styles.sectionHeaderLeft}>
+            <div style={styles.sectionIcon}>
+              <FiBell size={18} />
+            </div>
+            <div>
+              <h2 style={styles.sectionTitle}>Хабарландырулар</h2>
+              <p style={styles.sectionSubtitle}>Жаңа хабарламалар туралы ескертулер</p>
+            </div>
+          </div>
+          <label style={styles.switch}>
+            <input
+              type="checkbox"
+              checked={notificationsEnabled}
+              onChange={(e) => handleNotificationsChange(e.target.checked)}
+            />
+            <span style={{
+              ...styles.slider,
+              backgroundColor: notificationsEnabled ? '#6366f1' : '#cbd5e1'
+            }}>
+              <span style={{
+                position: 'absolute',
+                height: '22px',
+                width: '22px',
+                left: notificationsEnabled ? '28px' : '4px',
+                bottom: '4px',
+                backgroundColor: 'white',
+                borderRadius: '50%',
+                transition: '0.3s'
+              }} />
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div style={styles.card}>
+        <div
+          style={styles.sectionHeader}
+          onClick={() => setSecurityOpen(!securityOpen)}
+        >
+          <div style={styles.sectionHeaderLeft}>
+            <div style={styles.sectionIcon}>
+              <FiShield size={18} />
+            </div>
+            <div>
+              <h2 style={styles.sectionTitle}>Қауіпсіздік</h2>
+              <p style={styles.sectionSubtitle}>Құпия сөзді жаңарту және аккаунт қауіпсіздігі</p>
+            </div>
+          </div>
+          <FiChevronDown
+            size={20}
+            style={{
+              transform: securityOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: '0.3s'
+            }}
+          />
+        </div>
+
+        {securityOpen && (
         <form onSubmit={handleSubmit}>
           <div style={styles.inputGroup}>
             <label style={styles.label}>Ағымдағы құпия сөз</label>
@@ -120,6 +194,7 @@ function Settings() {
             <FiSave size={16} /> {loading ? 'Өзгерту...' : 'Құпия сөзді өзгерту'}
           </button>
         </form>
+        )}
       </div>
     </div>
   );
@@ -127,9 +202,9 @@ function Settings() {
 
 const styles = {
   container: {
-    maxWidth: '600px',
+    maxWidth: '700px',
     margin: '0 auto',
-    padding: '20px'
+    padding: '32px 20px'
   },
   backBtn: {
     display: 'flex',
@@ -144,26 +219,82 @@ const styles = {
     fontWeight: '500'
   },
   header: {
-    marginBottom: '28px'
+    marginBottom: '32px'
   },
   title: {
-    fontSize: '28px',
-    fontWeight: '700',
+    fontSize: '34px',
+    fontWeight: '800',
     color: '#111827',
-    marginBottom: '6px'
+    marginBottom: '10px',
+    letterSpacing: '-1px'
   },
   subtitle: {
     color: '#6b7280',
-    fontSize: '14px'
+    fontSize: '15px',
+    lineHeight: '1.6'
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: '20px',
-    padding: '28px',
-    boxShadow: '0 4px 20px rgba(15,23,42,0.05)'
+    background: 'rgba(255,255,255,0.9)',
+    backdropFilter: 'blur(12px)',
+    borderRadius: '28px',
+    padding: '20px 28px',
+    marginBottom: '20px',
+    boxShadow: '0 10px 35px rgba(15,23,42,0.08)',
+    border: '1px solid rgba(255,255,255,0.6)',
+    transition: '0.3s ease'
+  },
+  sectionHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    cursor: 'pointer'
+  },
+  sectionHeaderLeft: {
+    display: 'flex',
+    gap: '16px',
+    alignItems: 'center'
+  },
+  sectionIcon: {
+    width: '48px',
+    height: '48px',
+    borderRadius: '16px',
+    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#fff'
+  },
+  sectionTitle: {
+    fontSize: '18px',
+    fontWeight: '700',
+    margin: 0,
+    color: '#111827'
+  },
+  sectionSubtitle: {
+    fontSize: '13px',
+    color: '#6b7280',
+    marginTop: '4px',
+    marginBottom: 0
+  },
+  switch: {
+    position: 'relative',
+    display: 'inline-block',
+    width: '54px',
+    height: '30px'
+  },
+  slider: {
+    position: 'absolute',
+    cursor: 'pointer',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    transition: '.3s',
+    borderRadius: '999px'
   },
   inputGroup: {
-    marginBottom: '20px'
+    marginBottom: '20px',
+    marginTop: '24px'
   },
   label: {
     display: 'block',
@@ -176,17 +307,19 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
-    border: '1px solid #e2e8f0',
-    borderRadius: '12px',
-    padding: '0 14px',
-    backgroundColor: '#fff'
+    border: '1px solid #e5e7eb',
+    borderRadius: '16px',
+    padding: '0 16px',
+    backgroundColor: '#fff',
+    transition: '0.2s ease',
+    height: '52px'
   },
   inputWithIcon: {
     width: '100%',
-    padding: '12px 0',
     border: 'none',
-    fontSize: '14px',
-    outline: 'none'
+    fontSize: '15px',
+    outline: 'none',
+    background: 'transparent'
   },
   hint: {
     fontSize: '12px',
@@ -196,24 +329,28 @@ const styles = {
   saveBtn: {
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
-    padding: '12px 20px',
-    backgroundColor: '#6366f1',
+    gap: '10px',
+    padding: '14px 20px',
+    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
     color: '#fff',
     border: 'none',
-    borderRadius: '12px',
-    fontSize: '14px',
-    fontWeight: '600',
+    borderRadius: '16px',
+    fontSize: '15px',
+    fontWeight: '700',
     cursor: 'pointer',
     width: '100%',
     justifyContent: 'center',
-    marginTop: '10px'
+    marginTop: '16px',
+    transition: '0.3s ease',
+    boxShadow: '0 10px 25px rgba(99,102,241,0.3)'
   },
   message: {
-    padding: '12px 16px',
-    borderRadius: '12px',
-    marginBottom: '20px',
-    fontSize: '14px'
+    padding: '14px 18px',
+    borderRadius: '16px',
+    marginBottom: '24px',
+    fontSize: '14px',
+    fontWeight: '500',
+    backdropFilter: 'blur(10px)'
   },
   success: {
     backgroundColor: '#dcfce7',
