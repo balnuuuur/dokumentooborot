@@ -3,8 +3,10 @@ package com.example.project.service;
 import com.example.project.DTO.ChangePasswordRequest;
 import com.example.project.DTO.LoginRequest;
 import com.example.project.DTO.RegisterRequest;
+import com.example.project.entity.Document;
 import com.example.project.entity.User;
 import com.example.project.enums.Role;
+import com.example.project.repository.DocumentRepository;
 import com.example.project.repository.UserRepository;
 import com.example.project.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -14,11 +16,16 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
+    private final DocumentRepository documentRepository;
+    private final FileStorageService fileStorageService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
@@ -71,5 +78,19 @@ public class UserService {
         }
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+    }
+
+    public void deleteAccount(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Пайдаланушы табылмады"));
+
+        List<Document> userDocuments = documentRepository.findByOwnerId(user.getId());
+        for (Document doc : userDocuments) {
+            try {
+                fileStorageService.deleteFile(doc.getFilePath());
+            } catch (IOException e) {
+            }
+        }
+        userRepository.delete(user);
     }
 }

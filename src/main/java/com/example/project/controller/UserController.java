@@ -24,4 +24,15 @@ public class UserController {
             return ApiResponse.error(e.getMessage());
         }
     }
+
+    @DeleteMapping("/delete-account")
+    public ApiResponse<String> deleteAccount() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        try {
+            userService.deleteAccount(username);
+            return ApiResponse.success("Аккаунт сәтті жойылды", null);
+        } catch (Exception e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
 }
