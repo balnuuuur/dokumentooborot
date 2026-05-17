@@ -3,10 +3,14 @@ package com.example.project.service;
 import com.example.project.DTO.ChangePasswordRequest;
 import com.example.project.DTO.LoginRequest;
 import com.example.project.DTO.RegisterRequest;
+import com.example.project.entity.Comment;
 import com.example.project.entity.Document;
+import com.example.project.entity.Notification;
 import com.example.project.entity.User;
 import com.example.project.enums.Role;
+import com.example.project.repository.CommentRepository;
 import com.example.project.repository.DocumentRepository;
+import com.example.project.repository.NotificationRepository;
 import com.example.project.repository.UserRepository;
 import com.example.project.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +29,8 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final DocumentRepository documentRepository;
+    private final CommentRepository commentRepository;
+    private final NotificationRepository notificationRepository;
     private final FileStorageService fileStorageService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
@@ -84,6 +90,9 @@ public class UserService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Пайдаланушы табылмады"));
 
+        List<Comment> userComments = commentRepository.findByAuthorId(user.getId());
+        commentRepository.deleteAll(userComments);
+
         List<Document> userDocuments = documentRepository.findByOwnerId(user.getId());
         for (Document doc : userDocuments) {
             try {
@@ -91,6 +100,9 @@ public class UserService {
             } catch (IOException e) {
             }
         }
+        List<Notification> userNotifications = notificationRepository.findByUserId(user.getId());
+        notificationRepository.deleteAll(userNotifications);
+
         userRepository.delete(user);
     }
 }
