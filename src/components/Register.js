@@ -9,6 +9,7 @@ function Register() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [usernameError, setUsernameError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   const handleChange = (e) => {
       const { name, value } = e.target;
@@ -25,12 +26,20 @@ function Register() {
         }
       }
 
+      if (name === 'password') {
+        if (value.length < 6) {
+          setPasswordError('Құпия сөз кемінде 6 таңбадан тұруы керек');
+        } else {
+          setPasswordError('');
+        }
+      }
+
       setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (usernameError) return;
+    if (usernameError || passwordError) return;
     setLoading(true);
     setError('');
     setSuccess('');
@@ -103,12 +112,20 @@ function Register() {
               <input
                 type="password"
                 name="password"
-                style={styles.input}
+                style={{
+                  ...styles.input,
+                  borderColor: passwordError ? 'red' : '#e0e0e0',
+                }}
                 placeholder="·········"
                 value={formData.password}
                 onChange={handleChange}
                 required
               />
+              {passwordError && (
+                <small style={styles.errorText}>
+                  {passwordError}
+                </small>
+              )}
             </div>
 
             <button type="submit" style={styles.button} disabled={loading}>
@@ -232,6 +249,12 @@ const styles = {
     marginTop: '5px',
     fontSize: '12px',
     color: '#999'
+  },
+  errorText: {
+    display: 'block',
+    marginTop: '6px',
+    fontSize: '12px',
+    color: 'red'
   },
 };
 
