@@ -14,6 +14,18 @@ function Layout() {
       return localStorage.getItem('notificationsEnabled') !== 'false';
     });
 
+    const getInitials = (name) => {
+      if (!name) return '?';
+
+      const parts = name.trim().split(/\s+/);
+
+      if (parts.length === 1) {
+        return parts[0].charAt(0).toUpperCase();
+      } else {
+        return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+      }
+    };
+
   const loadUnreadCount = async () => {
       if (!notificationsEnabled) {
         setUnreadCount(0);
@@ -130,7 +142,7 @@ function Layout() {
           <div style={styles.headerRight}>
             <div style={styles.profile}>
               <div style={styles.avatar}>
-                {username.charAt(0).toUpperCase()}
+                {getInitials(username)}
               </div>
               <div style={styles.profileInfo}>
                 <p style={styles.profileName}>{username}</p>
