@@ -19,6 +19,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.List;
@@ -86,22 +87,36 @@ public class UserService {
         userRepository.save(user);
     }
 
+    @Transactional
     public void deleteAccount(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Пайдаланушы табылмады"));
 
-        List<Comment> userComments = commentRepository.findByAuthorId(user.getId());
-        commentRepository.deleteAll(userComments);
-
         List<Document> userDocuments = documentRepository.findByOwnerId(user.getId());
         for (Document doc : userDocuments) {
             try {
+                List<Comment> docComments = commentRepository.findByDocumentId(doc.getId());
+                if (docComments != null && !docComments.isEmpty()) {
+                    commentRepository.deleteAll(docComments);
+                }
                 fileStorageService.deleteFile(doc.getFilePath());
             } catch (IOException e) {
             }
         }
+
+        if (userDocuments != null && !userDocuments.isEmpty()) {
+            documentRepository.deleteAll(userDocuments);
+        }
+
+        List<Comment> userComments = commentRepository.findByAuthorId(user.getId());
+        if (userComments != null && !userComments.isEmpty()) {
+            commentRepository.deleteAll(userComments);
+        }
+
         List<Notification> userNotifications = notificationRepository.findByUserId(user.getId());
-        notificationRepository.deleteAll(userNotifications);
+        if (userNotifications != null && !userNotifications.isEmpty()) {
+            notificationRepository.deleteAll(userNotifications);
+        }
 
         userRepository.delete(user);
     }
